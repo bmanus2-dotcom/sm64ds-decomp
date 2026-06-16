@@ -5,8 +5,8 @@ A from-scratch effort to decompile **Super Mario 64 DS** into matching C.
 ## Progress
 
 ```
-Functions  ██████████░░░░░░░░░░░░░░░░░░░░  32.2%   3,666 / 11,390
-Code size  ███░░░░░░░░░░░░░░░░░░░░░░░░░░░   9.1%   203,560 / 2,234,028 bytes
+Functions  ██████████░░░░░░░░░░░░░░░░░░░░  32.9%   3,753 / 11,390
+Code size  ███░░░░░░░░░░░░░░░░░░░░░░░░░░░   9.4%   209,188 / 2,234,028 bytes
 ```
 
 Every arm-mode function in the game, drawn as a treemap. Each rectangle is one
@@ -91,7 +91,7 @@ issue so two people do not grind the same function.
 matching runs on. Most functions are matched for free by the automatic templates, and the
 harder ones are matched with AI assistance at roughly 5 to 10 cents of usage each. Spread
 across everything matched so far, that works out to about 5 cents per function on average,
-and reaching the current progress has cost on the order of $50 in AI usage. You can
+and reaching the current progress has cost on the order of $200 in AI usage. You can
 sponsor at https://github.com/sponsors/bmanus2-dotcom. This goes toward development and
 compute only; it has nothing to do with Nintendo's ROM or assets.
 
