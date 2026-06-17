@@ -103,13 +103,22 @@ Clone https://github.com/bmanus2-dotcom/sm64ds-decomp and set up the Super Mario
 matching-decompilation toolchain on my machine. Do these in order:
 1. Read CONTRIBUTING.md and notes/setup-mwccarm.md in the repo.
 2. Install the Python dependencies: ndspy, capstone, pyelftools.
-3. Help me obtain mwccarm and license.dat from the DS-decomp Discord and place them under
-   tools/mwccarm/, then set the LM_LICENSE_FILE environment variable.
-4. Install the dsd toolkit (github.com/AetiasHax/ds-decomp).
-5. Unpack my own SM64DS cartridge dump into the local working folder.
-6. Confirm the toolchain runs.
-7. Pick an unmatched function, help me write matching C for it, and verify it compiles
-   to the same bytes as the ROM.
+3. mwccarm and license.dat cannot be downloaded automatically: they are pinned in the
+   DS-decomp Discord and I have to fetch them by hand. Wait for me to do that, then help
+   me place them under tools/mwccarm/ and set the LM_LICENSE_FILE environment variable.
+4. Unpack my own SM64DS cartridge dump with tools/unpack.py. This writes the ARM9, ARM7,
+   and overlay binaries into extracted/ (gitignored), including both the compressed
+   arm9.bin and the decompressed arm9_dec.bin. Use the decompressed image for disassembly.
+5. Confirm the toolchain runs: re-match a function we have already landed (any file in
+   src/) with tools/match.py and check that it still reports identical bytes.
+6. Before matching, read CLAIMS.md and pick a module or address range that nobody has
+   claimed. Add a row claiming it (range, my handle, date), commit it on its own, and
+   push, so no one else grinds the same functions. Work only inside that claimed range.
+7. Pick an unmatched function from the claimed range, help me write matching C for it,
+   and verify with tools/match.py that it compiles to the same bytes as the ROM.
+8. Optional, only if I want to rebuild the full ROM later: install the dsd toolkit
+   (github.com/AetiasHax/ds-decomp). It needs the Rust toolchain and is not required for
+   matching individual functions, so skip it for now unless I ask.
 Use only my own legally dumped ROM. Never commit the ROM or anything extracted from it.
 ```
 
