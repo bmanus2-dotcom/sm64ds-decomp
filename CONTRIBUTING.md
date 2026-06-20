@@ -64,6 +64,11 @@ codegen-identical) with flags:
    until the bytes are identical.
 5. **Promote** the matched C into `src/`, commit, and open a PR.
 
+Before you start writing C, skim [`notes/mwccarm-codegen.md`](notes/mwccarm-codegen.md) - it
+documents how this exact compiler turns C into bytes (struct copies, bitfield shifts, C++
+virtual/PMF dispatch, the register-allocation wall, and the common idiom families). Writing
+with those habits in mind gets your first draft close and cuts iterations.
+
 ## Ground rules
 
 - **Never commit copyrighted material.** No ROM, no extracted assets, no `mwccarm`/
