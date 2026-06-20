@@ -47,6 +47,35 @@ fully solve.
 - Practical tell: if `match.py` shows the diff is only in register fields and the structure
   lines up, you're at the wall. Don't burn iterations re-expressing the same logic.
 
+**Empirical findings (from `tools/coloring.py` over the matched corpus):**
+- Only **~8.5%** of matched functions use `ip`/r12 at all, and it is almost always a
+  **short-lived value-shuffle scratch**: the dominant contexts are `ldr ip` / `str ip` /
+  `mov ip` (load a value, hold it, store it). It is essentially never live across a `bl`
+  (calls clobber ip).
+- The driver is **register pressure, not calls**: ip-using functions average ~0x66 bytes
+  vs ~0x3c for the rest, with nearly identical call counts. Bigger function -> low regs
+  fill -> the allocator spills a temp to ip.
+- **The "right logic, wrong color" pile is small.** `triage.py` finds only a handful of
+  regperm-only functions per module (e.g. 5 in arm9 <=0x50); the rest are "no template" =
+  real logic. So coloring is the *last* thing that goes wrong, after types/offsets/structure
+  are already correct - not the main blocker. Most misses fail earlier than the color.
+- **Matching C for an ip function is just natural, full C** - no ip-forcing trick. Example
+  that matches as-is: `return p[0] | (p[1]<<8) | (p[2]<<16) | (p[3]<<24);`. The coloring
+  emerges from expressing the *complete* computation with correct types; a minimized stub
+  under-expresses the pressure and colors into a low reg instead.
+
+**Lever: the access EXPRESSION changes the allocation.** When a candidate is byte-identical
+except a consistent register renaming, vary *how* you write the memory access before giving
+up - the logic is the same but the codegen differs:
+- `*(T*)G |= mask` (cast the array/base to a pointer and deref) vs `G[0] |= mask` (index)
+  produce **different** register orderings. The deref form reproduced the ROM's r0/r1
+  ordering on the `global_field_bitop` family where indexing always missed (it swapped r0
+  and r1). This is now what the template emits.
+- Other knobs that shift coloring: a named temporary vs an inline subexpression; writing the
+  fuller surrounding computation vs a minimal stub; pointer arithmetic vs array indexing.
+  None are guaranteed (allocation is non-local), but trying 2-3 access forms is cheap and
+  often flips a regperm miss into a strict match.
+
 ## 3. Leaf patterns (no calls)
 
 - **Bitfield extract needs an *unsigned* pointer type.** `*(unsigned*)p >> sh & mask` emits

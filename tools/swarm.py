@@ -485,7 +485,12 @@ def rule_global_field_bitop(name, ins, b):
                 if lesz == sesz and off == soff and off % lesz == 0:
                     imm = int(op.group(3), 0)
                     idx = off // lesz
-                    body = f"G[{idx}] |= {imm};" if ins[2].mnemonic == "orr" else f"G[{idx}] &= ~{imm};"
+                    # Coloring: casting the array name to a pointer and dereferencing
+                    # (*(T*)G) reproduces the ROM's r0/r1 ordering, where indexing
+                    # (G[0]) compiles to the swapped allocation. For idx>0 keep the
+                    # equivalent pointer form so the access still lands at the offset.
+                    lval = f"*({ltype}*)G" if idx == 0 else f"*({ltype}*)(G+{idx})"
+                    body = f"{lval} |= {imm};" if ins[2].mnemonic == "orr" else f"{lval} &= ~{imm};"
                     return (f"extern {ltype} G[];\nvoid {name}(void) {{ {body} }}\n"), "global_field_bitop"
     return None
 
