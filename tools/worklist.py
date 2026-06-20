@@ -174,13 +174,18 @@ def main():
     ap.add_argument("--examples", type=int, default=2,
                     help="attach up to N verified sibling sources (same mnemonic "
                          "sequence) as few-shot examples per record; 0 disables")
+    ap.add_argument("--similar", action="store_true",
+                    help="similarity scheduling: order functions by how many already-"
+                         "matched lookalikes they have (most references first), so the "
+                         "fan-out gets the best in-context examples. Collects the whole "
+                         "pile then takes the top --limit.")
     args = ap.parse_args()
 
     done = sweep.load_done()
     gsyms = R.load_all_syms()
     kb = KB.build_kb()
     ex_mnem, ex_callee = (build_example_index(done, gsyms, args.max)
-                          if args.examples > 0 else ({}, {}))
+                          if (args.examples > 0 or args.similar) else ({}, {}))
 
     if args.list_classes:
         import collections
@@ -214,6 +219,7 @@ def main():
                     print(f"    {ln}")
             print()
         else:
+            rec.pop("_sim", None)
             print(json.dumps(rec))
 
     # Build per-module candidate lists (sweep.funcs yields in address order, so the
@@ -267,17 +273,26 @@ def main():
                         break
                 if ex:
                     rec["examples"] = ex
+            if args.similar:
+                # similarity = count of already-matched lookalikes (same mnemonic
+                # shape or same callee set). More references -> schedule earlier.
+                rec["_sim"] = (len(ex_mnem.get(mnem_key(ins), []))
+                               + len(ex_callee.get(frozenset(callees), [])))
             if label not in buckets:
                 buckets[label] = []
                 order.append(label)
             buckets[label].append(rec)
-            if not args.spread and args.limit and \
+            if not args.spread and not args.similar and args.limit and \
                     sum(len(v) for v in buckets.values()) >= args.limit:
                 break
         else:
             continue
         if not args.spread:
             break
+
+    if args.similar:
+        for label in order:
+            buckets[label].sort(key=lambda r: -r.get("_sim", 0))
 
     emitted = 0
     if args.spread:

@@ -51,3 +51,6 @@ notes/matching-log.md
 notes/recon-2026-06-13.md
 notes/overnight-plan.md
 notes/ac-decomp-comparison.md
+
+# third-party tools cloned for evaluation/integration (not part of this repo)
+vendor/
