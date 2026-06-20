@@ -148,6 +148,26 @@ virtual methods are fine - we only `-c` compile, never link; only the vtable lay
 - **Destructor chains** (`func_ovNN_...` returning this): a vtable install, several
   `SubObjectD1(this+off)` calls in reverse construction order, then `Deallocate`.
 
+## 6b. Logic is necessary but NOT sufficient -- match the codegen SHAPE
+
+Analysis of LLM near-misses (drafts that compile but don't byte-match) found the dominant
+failure is NOT wrong logic -- the logic is usually right. It is correct logic expressed in
+C that compiles to a different instruction SHAPE. The recurring structural misses:
+- **Control flow.** A mid-function `cmp; ...eq; pop..eq; bx..eq` is an early return -> write
+  `if (cond) return X;` with the same test direction, not a wrapping loop/if-else. A loop
+  whose conditional branch sits at the BOTTOM of the disasm is a do/while (test at bottom),
+  not a `while` (test at top). A retry call at the very end belongs at the bottom of the loop.
+- **Call-arg spilling.** When the ROM does `str rN,[sp,#K]` then reloads `ldr rN,[sp,#K]`
+  before each of several calls, those are LOCALS the compiler spilled (calls clobber r0-r3).
+  Use plain locals and pass them to each call; do NOT pack them into a struct (a struct
+  changes the spill shape) unless the disasm shows a struct copy.
+- **Statement order/count.** One store per assignment, in the disasm's order. No redundant or
+  reordered assignments.
+- **Arithmetic idiom.** `mul` then `sub` is `x*K - C`, not `(x - C/K)*K`. Reproduce the exact
+  op sequence, not an algebraically-equal rewrite.
+On a FALSE, diff your candidate's shape against the disasm and fix the FIRST divergence (a
+missing reload, a flipped branch, an extra/absent instruction) -- don't just reshuffle.
+
 ## 7. Workflow implications
 
 - **Free tiers first, every cycle:** `clone.py` (byte-identical retarget) then `paramclone.py`
