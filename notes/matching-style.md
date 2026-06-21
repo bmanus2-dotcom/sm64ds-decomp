@@ -142,3 +142,30 @@ WRITE args in natural order; arg5 -> `str [sp]`, arg6 -> `str [sp,#4]`, with `su
 ### Not source-controllable (don't waste cycles; hand to permuter)
 - **Base-address materialization** (`add r2,r5,#OFF; ldr [r2]` vs `ldr [r5,#OFF]`): pointer locals, sub-object access, volatile all still fold to `[base,#off]`. Permuter territory.
 - **Large-offset base split**: offset beyond ARM rotated-immediate range (e.g. 0x418, or `strh` past its smaller range) forces `ldr [pc];add` or `add base; strh [#small]`. Encoding-forced, not source-driven â€” leave it.
+## Hand-crack validated rules (2026-06-20, high-effort hand-cracking + diff-oracle)
+
+These were proven by hand-cracking real functions and watching the divergence count drop:
+
+- **NEW-CTOR NULL CHECK: put the body INSIDE `if (p) { ... }`, return p after** -- NOT `if (!p) return p;`.
+  `p = New(sz); if (p) { Ctor(p); ...installs...; } return p;` -> `movs r4,r0; beq <end>` (branch
+  around the body), shared `mov r0,r4; pop; bx` exit. The early-return form predicates (`popeq;bxeq`)
+  and misses. Validated: func_ov003_020adc10 18 -> 7 divergences.
+- **MULTI-CONDITION EARLY-OUT TO A SHARED RETURN: use a `&&` chain, not separate `if(x) return K;`**.
+  `if (a==0 && b==0 && c==0 && d==0) return 1; return 0;` -> each test `cmp; bne <shared ret0>`
+  (branch), with a single shared exit. Separate `if (a) return 0;` statements PREDICATE each
+  (`movne r0,#0; bxne lr`) and miss. Validated: func_ov007_020aebac 10 -> 2 divergences.
+
+## The base-address materialization wall (precise characterization)
+
+mwccarm sometimes emits `add rX, base, #OFF; ldr/strb [rX]` (materialize) where direct
+`[base,#OFF]` would do. From the corpus + hand-cracking:
+- It IS reproducible when a base is reused at CONSECUTIVE NON-ZERO offsets: `int* p = (int*)(c+OFF);
+  p[1]; p[2];` or `r[0x17]; r[0x18]; r[0x19];` materializes `add rX,base,#OFF` and uses [rX,#k].
+  (Examples: _ZN18SolidHeapAllocator8ResetEndEv, func_020080b0.)
+- It is NOT reproducible when the FIRST/only access is at offset 0 from the materialized base
+  (`q[0]`, `*f`, `o->flags[0]`, a single-address read-modify-write): C always folds the zero-offset
+  access to direct `[base,#OFF]`. Tried pointer locals, sub-objects, volatile, real struct array
+  members -- all fold. The permuter cannot reach it either (it has no "materialize a base" mutation).
+  This is the single most common residual blocker (1-2 instructions) on otherwise-matched functions,
+  and it is currently UNMATCHABLE from C when the access is zero-offset. Leave it for a future model
+  or a permuter pass that learns this transform.
