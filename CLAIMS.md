@@ -21,4 +21,5 @@ it is fair to take over: ping the claimant first.
 |---|---|---|---|
 | _example: ov004 0x020b0000-0x020b8000_ | _handle_ | _2026-06-17_ | _example_ |
 | ov034 .text 0x021111a0-0x02113820 | claude-agent | 2026-06-20 | paused (easy leaves done; residue is logic) |
-| ov006 (small unmatched leaf/logic sweep) | claude-agent | 2026-06-20 | active |
+| ov006 (small unmatched leaf/logic sweep) | claude-agent | 2026-06-20 | active (91 matched; residue is codegen walls) |
+| arm9/main (small <=0x40 leaf sweep) | claude-agent | 2026-06-20 | active |
