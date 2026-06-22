@@ -15,3 +15,21 @@ One record per (module, addr), keeping the CLOSEST candidate:
 Managed by `tools/nearmiss_db.py` (ingest / stats / list / export-close / bank-matches).
 Run `python tools/permuter/crunch.py` to grind the closest ones through the permuter locally
 (free), banking any that reach a match.
+
+## Standing rule: every batch feeds this DB
+
+A harvest/fan-out batch must save its misses, not just its matches. Do not let this starve.
+
+1. The fan-out agent prompt MUST ask each agent to emit a SECOND file of near-misses next to
+   its matches: compiling, structurally-correct C that did not byte-match, as
+   `{name, module, addr, c_source}`. The permuter only fixes register allocation and
+   instruction ordering, so the seed must have the right instructions in the right shape -- a
+   draft missing instructions (e.g. base-materialization floor) is not useful fuel.
+2. After banking the matches, ingest the misses:
+   `python tools/nearmiss_db.py ingest --seeds <file> --label <batch>`.
+3. Work the backlog: `list --max-div 4` is the closest-first by-hand queue; `export-close` +
+   `tools/permuter/batch.py --seeds` (or `crunch.py`) grinds them; `bank-matches` re-checks all
+   entries and banks any that now reach a byte match.
+
+Why: re-deriving a 95%-done attempt costs tokens; finishing one (a small fix, the permuter, or a
+stronger model later) is cheap. The misses are the most valuable byproduct of every batch.
