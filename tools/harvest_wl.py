@@ -69,14 +69,16 @@ def main():
     rows = [json.loads(l) for l in open(pool_path) if l.strip()]
     pool_path.unlink(missing_ok=True)
 
-    # exclude functions already parked NONMATCHING (known floor -- don't re-attempt them)
+    # exclude functions already parked NONMATCHING and the floor skip-list (confirmed
+    # floor/regperm that agents keep re-hitting but can't match from C -- don't re-attempt).
     parked = set()
-    nm = REPO / "progress" / "nonmatching.jsonl"
-    if nm.exists():
-        for l in nm.read_text().splitlines():
-            if l.strip():
-                r = json.loads(l)
-                parked.add((r["module"], r["addr"]))
+    for fn in ("nonmatching.jsonl", "floor_skip.jsonl"):
+        p = REPO / "progress" / fn
+        if p.exists():
+            for l in p.read_text().splitlines():
+                if l.strip():
+                    r = json.loads(l)
+                    parked.add((r["module"], r["addr"]))
     rows = [r for r in rows if (r["module"], r["addr"]) not in parked]
 
     sz = lambda r: int(r["size"], 16) if isinstance(r["size"], str) else r["size"]
