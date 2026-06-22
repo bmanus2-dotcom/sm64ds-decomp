@@ -1,0 +1,16 @@
+// HAND-ASM PRIMITIVE: byte-faithful asm-block match. This function was assembly
+// in the original (SDK/runtime primitive: block copy, matrix/math, CP15, context
+// switch, etc.), so there is no C to decompile it to -- the asm block is the
+// faithful source. Counts as matched (asm-primitive policy), not a C transcription.
+asm void func_020707cc(void) {
+    stmdb sp!, {r0, r1, r2, r3}
+    add r0, sp, #0
+    add r1, r0, #4
+    ldr r0, [r1]
+    bic r0, r0, #0x80000000
+    str r0, [r1]
+    ldr r0, [sp]
+    ldr r1, [sp, #4]
+    add sp, sp, #0x10
+    bx lr
+}
