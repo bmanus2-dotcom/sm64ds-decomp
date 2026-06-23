@@ -15,6 +15,12 @@ This decompilation builds on reverse-engineering knowledge from the SM64DS commu
 
 If you contribute, keep this separation: import knowledge, write code.
 
+## Matched-function contributions
+- **Ryan Copley** (https://github.com/RyanCopley) - hand-wrote and verified matching C for a
+  set of functions across ov002, ov006, arm9, and ov034 (PR #1). 22 of these were ones not
+  yet matched here, including the first two functions in ov034 and several that had resisted
+  our automated passes; all were independently re-verified byte-for-byte before landing.
+
 ## Tooling contributions
 - **webhead2oo9** (https://github.com/webhead2oo9) - made the relocation symbol resolver
   module-aware: it now resolves by `(module, address)` instead of address alone, so a
