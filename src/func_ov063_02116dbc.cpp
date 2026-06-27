@@ -1,0 +1,1 @@
+//cpp class ActorBase { public:     void MarkForDestruction(); };  extern int func_ov063_0211a3d0(void *c); extern void func_0201267c(int a, void *b);  extern "C" void func_ov063_02116dbc(void *c) {     if (func_ov063_0211a3d0(c) == 0) return;     ((ActorBase *)c)->MarkForDestruction();     func_0201267c(0xd5, (char *)c + 0x74); }
