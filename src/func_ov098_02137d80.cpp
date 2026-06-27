@@ -1,0 +1,1 @@
+//cpp struct Player {     void IncMegaKillCount(); };  struct Platform {     void KillByMegaChar(Player &); };  extern "C" void func_02012694(int, void *);  extern "C" void func_ov098_02137d80(void *a, void *b) {     ((Player *)b)->IncMegaKillCount();     func_02012694(0x1e, (char *)a + 0x74);     ((Platform *)a)->KillByMegaChar(*(Player *)b); }
