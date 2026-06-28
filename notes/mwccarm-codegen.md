@@ -87,6 +87,21 @@ up - the logic is the same but the codegen differs:
 - **`add` folds into the addressing mode.** For `*(T*)(p+off) = 0`, don't model an explicit
   `add` - emit the store and let CW pick add-vs-direct by whether `off` fits the immediate.
   Tracking an effective offset through an `add rT,rB,#big` is enough; the compiler chooses.
+- **WALL: the *materialized*-`add` flag read-modify-write is NOT C-reproducible.** A large
+  cluster of single-flag setters appears in the ROM as a frameless 5-instruction form that
+  computes the address into its own register first and shares it for the load and store:
+  `add rA,rB,#off ; ldr/ldrb rV,[rA] ; orr/bic rV,rV,#bit ; str/strb rV,[rA] ; bx lr`
+  (e.g. the whole `BgCh::Start/StopDetecting*` family at `this+4`; the int-flag family at
+  `obj+0x154`: `func_02009d30`, `func_0200ca14`, `func_020050dc`). The corresponding C
+  (`*(T*)(base+off) |= bit`) ALWAYS folds the address into the offset and emits the tighter
+  4-instruction `ldrb [rB,#off]; orr; strb [rB,#off]; bx` instead - the ROM's form is the
+  *less*-optimized one, which `-O4,p` never produces. Confirmed unreachable: swept 6 source
+  idioms (deref/ptr-var/index/ref/volatile/split-RMW) x all 11 mwccarm versions x 7 opt
+  levels - every optimized build folds, `-O0` adds a stack frame, nothing lands the 5-instr
+  shape. No `-opt nopeephole` knob changes it (it's instruction selection, not a peephole).
+  These are not asm-hatch material either (clean compiled-code shape, no hand-asm tell).
+  Treat the whole flag-RMW-materialized cluster as shape-blocked; flag and move on
+  (2026-06-27).
 - **Repeated global -> one pool word.** If the same global is referenced several times, CW
   loads it once. Emitting distinct extern names per use inflates the pool and breaks the size.
   Dedup globals by reloc-target identity.

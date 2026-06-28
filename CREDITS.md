@@ -24,7 +24,9 @@ If you contribute, keep this separation: import knowledge, write code.
   for 9 functions across arm9, ov002, ov006, and ov007 (PR #2). These are reloc tail-call,
   guard-return, and call-forwarding shapes the automated passes deliberately skip; all were
   independently re-verified byte-for-byte, identical across the 1.2 base/sp2/sp2p3 trio, before
-  landing.
+  landing. Followed up with 33 more matched functions across arm9, ov002, ov004, ov006, ov007,
+  ov060, and ov102 (PRs #45 and #48) plus codegen notes; all 33 independently re-verified against
+  the ROM before landing.
 - **Moundistz** (https://github.com/Moundistz) - contributed 3 matched functions and 8
   nonmatching floor entries, plus a pass of placeholder-to-resolved callee renames across the
   arm9 corpus. Every candidate was independently re-verified against the ROM before landing;
