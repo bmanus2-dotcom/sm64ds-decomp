@@ -4,11 +4,11 @@
  */
 struct Obj { void *vtable; };
 extern void *_ZTV19CylinderClsnWithPos[];
-extern void _ZN12CylinderClsnC2Ev(struct Obj *thiz); /* 0x020150cc */
+extern void func_020398c8(struct Obj *thiz); /* 0x020150cc */
 
 struct Obj *_ZN18MovingMeshColliderC1Ev(struct Obj *thiz)
 {
-    _ZN12CylinderClsnC2Ev(thiz);
+    func_020398c8(thiz);
     thiz->vtable = (void *)_ZTV19CylinderClsnWithPos;
     return thiz;
 }

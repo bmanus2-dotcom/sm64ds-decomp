@@ -1,6 +1,6 @@
 //cpp
 extern "C" {
-extern int data_ov036_02113f9c[];
+extern int data_ov100_0214857c[];
 extern int data_ov002_0210af70[];
 extern int data_ov002_0210ae38[];
 void ModelAnim_dtor(void*);
@@ -10,7 +10,7 @@ void Model_dtor(void*);
 void Actor_dtor(void*);
 }
 extern "C" int func_ov100_02146d7c(char* c){
-  *(int**)c=(int*)data_ov036_02113f9c;
+  *(int**)c=(int*)data_ov100_0214857c;
   ModelAnim_dtor(c+0x450);
   *(int**)c=(int*)data_ov002_0210af70;
   func_0207328c(c+0x320,3,0x50,(void*)Model_dtor);

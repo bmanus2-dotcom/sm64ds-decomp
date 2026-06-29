@@ -14,7 +14,7 @@ struct SaveData {
 };
 
 extern int _ZN8SaveData16CanPlayerHaveCapEv(void);
-extern int _ZN8SaveData15SaveCurrentFileEv(void);
+extern int func_020139b8(void);
 extern struct SaveData SAVE_DATA;
 
 void func_02013a88(void)
@@ -22,5 +22,5 @@ void func_02013a88(void)
     if (!_ZN8SaveData16CanPlayerHaveCapEv())
         return;
     SAVE_DATA.flags1 = SAVE_DATA.flags1 & ~(0x1000000u << SAVE_DATA.currentCharacter);
-    _ZN8SaveData15SaveCurrentFileEv();
+    func_020139b8();
 }
