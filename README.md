@@ -5,8 +5,8 @@ A from-scratch effort to decompile **Super Mario 64 DS** into matching C.
 ## Progress
 
 ```
-Functions  ███████████████████░░░░░░░░░░░  62.6%   7,133 / 11,390
-Code size  ████████░░░░░░░░░░░░░░░░░░░░░░  28.0%   625,304 / 2,234,028 bytes
+Functions  ███████████████████░░░░░░░░░░░  63.0%   7,174 / 11,390
+Code size  █████████░░░░░░░░░░░░░░░░░░░░░  28.5%   637,308 / 2,234,028 bytes
 ```
 
 Every arm-mode function in the game, drawn as a treemap. Each rectangle is one
@@ -147,15 +147,16 @@ ROM.
 Function contributions: [RyanCopley](https://github.com/RyanCopley) hand-matched a set of
 functions across ov002, ov006, arm9, and ov034 (PR #1), including the first functions in
 ov034 and several that had resisted the automated passes.
-[andrewboudreau](https://github.com/andrewboudreau) hand-matched 9 functions across arm9,
-ov002, ov006, and ov007 (PR #2), then 33 more across arm9 and seven overlays plus codegen
-notes (PRs #45 and #48).
+[andrewboudreau](https://github.com/andrewboudreau) has hand-matched a large set of functions
+across arm9 and many overlays (PRs #2, #45, #48), and contributed codegen notes on boolean
+materialization and predicated-select shapes (PR #49).
 [Moundistz](https://github.com/Moundistz) contributed 3 matched functions and 8 nonmatching
 floor entries, plus a pass of placeholder-to-resolved callee renames across the arm9 corpus.
 
 Tooling contributions: [webheadvr](https://github.com/webheadvr) made the relocation
 symbol resolver module-aware, fixing wrong-overlay symbol picks where overlay address
-ranges overlap.
+ranges overlap. [andrewboudreau](https://github.com/andrewboudreau) added a relocation
+destination audit and an opt-in strict-relocs check to the verify path (PR #47).
 
 ## License
 

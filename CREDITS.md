@@ -24,9 +24,10 @@ If you contribute, keep this separation: import knowledge, write code.
   for 9 functions across arm9, ov002, ov006, and ov007 (PR #2). These are reloc tail-call,
   guard-return, and call-forwarding shapes the automated passes deliberately skip; all were
   independently re-verified byte-for-byte, identical across the 1.2 base/sp2/sp2p3 trio, before
-  landing. Followed up with 33 more matched functions across arm9, ov002, ov004, ov006, ov007,
-  ov060, and ov102 (PRs #45 and #48) plus codegen notes; all 33 independently re-verified against
-  the ROM before landing.
+  landing. Has since hand-matched a large further set across arm9 and many overlays
+  (PRs #45 and #48, including a 41 function batch across ov002/ov004/ov006/ov007/ov015/ov060/ov102),
+  all independently re-verified byte-for-byte before landing, and contributed codegen notes on
+  boolean materialization and predicated-select shapes (PR #49).
 - **Moundistz** (https://github.com/Moundistz) - contributed 3 matched functions and 8
   nonmatching floor entries, plus a pass of placeholder-to-resolved callee renames across the
   arm9 corpus. Every candidate was independently re-verified against the ROM before landing;
@@ -38,3 +39,7 @@ If you contribute, keep this separation: import knowledge, write code.
   module-aware: it now resolves by `(module, address)` instead of address alone, so a
   reloc is no longer mis-resolved to a symbol from a different overlay where overlay
   address ranges overlap. Also added ITCM/DTCM symbol support.
+- **Andrew Boudreau** (https://github.com/andrewboudreau) - added a relocation destination audit
+  (`tools/reloc_audit.py`) and an opt-in `match.py --strict-relocs` check that verifies each
+  reloc slot points at the address `config/**/relocs.txt` records, closing a gap where the
+  byte compare wildcards relocated words without checking their destination (PR #47).
