@@ -1,4 +1,4 @@
-extern void func_ov062_02116edc(void *c);
+extern void func_ov078_02125f8c(void *c);
 extern int _ZN5Model6RenderEPK7Vector3(void *m, void *v);
 int func_ov078_021260ac(void *c)
 {
@@ -8,7 +8,7 @@ int func_ov078_021260ac(void *c)
         int flag = (r0 & 0x4000) ? 1 : 0;
         if (flag != 0) {
             if (*(int*)((char*)r1 + 0xc8) != 0) {
-                func_ov062_02116edc(c);
+                func_ov078_02125f8c(c);
             }
         }
     }

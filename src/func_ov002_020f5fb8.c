@@ -1,10 +1,10 @@
 int func_ov002_020f5fb8(void* c){
-  extern int func_ov006_020d65c8();
-  extern int func_ov006_020d8408();
-  extern int func_ov006_020d836c();
-  extern int func_ov006_020d6784();
-  func_ov006_020d65c8(c);
-  func_ov006_020d8408(c);
-  func_ov006_020d836c(c);
-  return func_ov006_020d6784(c);
+  extern int func_ov002_020f5990();
+  extern int func_ov002_020f37a0();
+  extern int func_ov002_020f2dd4();
+  extern int func_ov002_020f27e8();
+  func_ov002_020f5990(c);
+  func_ov002_020f37a0(c);
+  func_ov002_020f2dd4(c);
+  return func_ov002_020f27e8(c);
 }

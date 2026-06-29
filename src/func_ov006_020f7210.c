@@ -1,8 +1,8 @@
-extern void func_ov006_0211dd0c(void* c);
-extern void func_ov006_0211d7b0(void* c);
-extern void func_ov006_0211f6fc(void* c);
+extern void func_ov006_020f5c40(void* c);
+extern void func_ov006_020f5a64(void* c);
+extern void func_ov006_020f59c0(void* c);
 void func_ov006_020f7210(void* c) {
-    func_ov006_0211dd0c(c);
-    func_ov006_0211d7b0(c);
-    func_ov006_0211f6fc(c);
+    func_ov006_020f5c40(c);
+    func_ov006_020f5a64(c);
+    func_ov006_020f59c0(c);
 }

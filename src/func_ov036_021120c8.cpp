@@ -4,7 +4,7 @@ extern void* _ZN9ActorBasenwEj(unsigned);
 extern void _ZN8PlatformC2Ev(void*);
 extern void func_020733a8(void*,int,int,void*,void*);
 extern int data_ov002_02108d94[];
-extern int data_ov043_0211255c[];
+extern int data_ov036_02113ecc[];
 extern void _ZN5ModelD1Ev(void*);
 extern void _ZN5ModelC1Ev(void*);
 extern void _ZN18MovingMeshColliderD1Ev(void*);
@@ -16,7 +16,7 @@ void* func_ov036_021120c8(void){
     *(int*)c = (int)data_ov002_02108d94;
     func_020733a8(c+0x320, 5, 0x50, (void*)_ZN5ModelC1Ev, (void*)_ZN5ModelD1Ev);
     func_020733a8(c+0x4b0, 5, 0x1c8, (void*)_ZN18MovingMeshColliderC1Ev, (void*)_ZN18MovingMeshColliderD1Ev);
-    *(int*)c = (int)data_ov043_0211255c;
+    *(int*)c = (int)data_ov036_02113ecc;
   }
   return c;
 }

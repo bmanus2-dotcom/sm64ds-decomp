@@ -5,7 +5,7 @@ typedef unsigned int u32;
 
 struct BgCh { u32 _pad[1]; };
 
-extern void _ZN4BgCh18StopDetectingWaterEv(struct BgCh* self);
+extern void func_02035428(struct BgCh* self);
 
 struct WithMeshClsn {
     u32 pad00[8];           /* 0x00-0x1f */
@@ -16,6 +16,6 @@ struct WithMeshClsn {
 
 void func_02035800(struct WithMeshClsn* self)
 {
-    _ZN4BgCh18StopDetectingWaterEv(&self->fld134);
-    _ZN4BgCh18StopDetectingWaterEv(&self->fld20);
+    func_02035428(&self->fld134);
+    func_02035428(&self->fld20);
 }

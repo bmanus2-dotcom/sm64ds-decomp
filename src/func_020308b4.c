@@ -3,11 +3,11 @@
  */
 typedef signed char s8;
 
-extern s8 SublevelToLevel(s8 levelID);
-extern void OpenCannon(s8 courseID);
+extern s8 func_0203d854(s8 levelID);
+extern void func_0203d868(s8 courseID);
 
 void func_020308b4(s8 levelID)
 {
-    s8 courseID = SublevelToLevel(levelID);
-    OpenCannon(courseID);
+    s8 courseID = func_0203d854(levelID);
+    func_0203d868(courseID);
 }

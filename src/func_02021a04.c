@@ -1,4 +1,4 @@
-extern int func_02011aa0(void*);
+extern int func_02021cd4(void*);
 int func_02021a04(char* table, char* n){
   void* prev = *(void**)(n+0x14);
   void* next = *(void**)(n+0x18);
@@ -11,5 +11,5 @@ int func_02021a04(char* table, char* n){
   if(next){
     *(void**)((char*)next+0x14) = prev;
   }
-  return func_02011aa0(n);
+  return func_02021cd4(n);
 }

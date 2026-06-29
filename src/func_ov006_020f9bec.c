@@ -1,11 +1,11 @@
 typedef unsigned char u8;
-extern void *data_ov006_0213d564;
+extern void *data_ov006_0213d6fc;
 extern u8 data_020a0e40[];
 extern u8 data_020a0de8[];
 extern u8 data_020a0de9[];
 extern u8 data_020a0dea[];
 extern u8 data_020a0deb[];
-extern int func_ov006_020f7b10(void);
+extern int func_ov006_020f9668(void);
 
 struct Obj { char pad[0xc]; int fc; int f10; };
 
@@ -16,8 +16,8 @@ int func_ov006_020f9bec(struct Obj *c)
     int has;
     int a, b;
 
-    if (data_ov006_0213d564 == 0) return 0;
-    if (func_ov006_020f7b10() != 0) goto fail;
+    if (data_ov006_0213d6fc == 0) return 0;
+    if (func_ov006_020f9668() != 0) goto fail;
 
     idx = data_020a0e40[0];
     off = idx * 4;

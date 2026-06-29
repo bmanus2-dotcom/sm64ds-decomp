@@ -1,5 +1,5 @@
 extern void *_ZTV12CylinderClsn;
-extern void *_ZN12CylinderClsnD2Ev(void *self);
+extern void *func_02014fa4(void *self);
 extern void _ZN6Memory16operator_delete2EPv(void *ptr);
 
 struct CylinderClsn {
@@ -9,7 +9,7 @@ struct CylinderClsn {
 void *_ZN12CylinderClsnD0Ev(struct CylinderClsn *self)
 {
     self->vtable = &_ZTV12CylinderClsn;
-    _ZN12CylinderClsnD2Ev(self);
+    func_02014fa4(self);
     _ZN6Memory16operator_delete2EPv(self);
     return self;
 }
