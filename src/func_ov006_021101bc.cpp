@@ -3,8 +3,8 @@ extern "C" {
 extern void func_ov006_0211474c(char* c, int a1, int a2, int* a3);
 extern void func_020733a8(void* arr, int count, int size, void(*ctor)(void*), void(*dtor)(void*));
 extern void *data_ov006_0213ed74[];
-extern void func_0203d47c(void*);
 extern void func_0203d738(void*);
+extern void func_0203d47c(void*);
 void* func_ov006_021101bc(char* c, int a1, int a2, int* src);
 void* func_ov006_021101bc(char* c, int a1, int a2, int* src){
     int tmp[2];

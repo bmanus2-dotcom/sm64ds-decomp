@@ -95,7 +95,18 @@ def rom_target(target, o, rtype, func_addr):
     imm = w & 0xFFFFFF
     if imm & 0x800000:
         imm -= 0x1000000
-    return (func_addr + o + 8 + (imm << 2)) & 0xFFFFFFFF
+    dest = func_addr + o + 8 + (imm << 2)
+    if (w >> 24) in (0xfa, 0xfb):     # BLX (ARM->Thumb): the H bit adds a halfword
+        dest += ((w >> 24) & 1) << 1
+    return dest & 0xFFFFFFFF
+
+
+def is_interwork(rom_word, rom_t, cand_t):
+    """True if the ROM slot is a BLX immediate (ARM->Thumb interworking call) whose
+    destination equals the address the candidate names. The candidate object emits a
+    plain BL with a relocation; the linker rewrites it to BLX because the target is a
+    Thumb symbol. Only the encoding differs, so the source call is correct."""
+    return (rom_word >> 24) in (0xfa, 0xfb) and cand_t is not None and rom_t == cand_t
 
 
 def is_benign(rom_t, cand_t, prefer):
@@ -113,8 +124,15 @@ def is_benign(rom_t, cand_t, prefer):
 
 
 def func_relocs_typed(obj, func, name_index):
-    """[{off, type, sym, addr}] for relocs inside func; addr is the resolved target
-    or None if the symbol name carries no address. Returns None if func is absent."""
+    """[{off, type, sym, addr, add}] for relocs inside func; addr is the resolved
+    target base or None if the symbol name carries no address; add is the relocation
+    addend (so the linked word is base + add, e.g. &array[i].field). Returns None if
+    func is absent.
+
+    The addend is essential: mwccarm emits RELA relocations and encodes every
+    base+offset access (struct fields, array elements) as the symbol's base address
+    plus a nonzero r_addend. Reading only the base would mis-link those slots and
+    report a correct source as WRONG. REL objects carry the addend in the slot."""
     elf = ELFFile(io.BytesIO(obj))
     symtab = elf.get_section_by_name(".symtab")
     syms = list(symtab.iter_symbols())
@@ -123,7 +141,9 @@ def func_relocs_typed(obj, func, name_index):
         return None
     sec = elf.get_section(sym["st_shndx"])
     start, size = sym["st_value"], sym["st_size"]
+    secdata = sec.data()
     rel = elf.get_section_by_name(".rel" + sec.name) or elf.get_section_by_name(".rela" + sec.name)
+    is_rela = rel is not None and rel.name.startswith(".rela")
     out = []
     if rel is not None:
         for r in rel.iter_relocations():
@@ -132,8 +152,15 @@ def func_relocs_typed(obj, func, name_index):
                 continue
             tsym = syms[r["r_info_sym"]]
             res = RA.resolve_candidate(tsym.name, name_index)
-            out.append({"off": o, "type": r["r_info_type"], "sym": tsym.name,
-                        "addr": (res[1] if res else None)})
+            rtype = r["r_info_type"]
+            if is_rela:
+                add = r["r_addend"]
+            elif rtype == R_ARM_ABS32:
+                add = int.from_bytes(secdata[r["r_offset"]:r["r_offset"] + 4], "little")
+            else:
+                add = -8  # REL branch: the -8 PC bias is folded into link_function's formula
+            out.append({"off": o, "type": rtype, "sym": tsym.name,
+                        "addr": (res[1] if res else None), "add": add})
     return out
 
 
@@ -145,15 +172,15 @@ def link_function(code, addr, relocs):
     buf = bytearray(code)
     blind = []
     for rl in relocs:
-        o, t, ta = rl["off"], rl["type"], rl["addr"]
+        o, t, ta, add = rl["off"], rl["type"], rl["addr"], rl.get("add", 0)
         if ta is None or (t not in BRANCH_TYPES and t != R_ARM_ABS32):
             blind.append(o & ~3)
             continue
         if t == R_ARM_ABS32:
-            struct.pack_into("<I", buf, o, ta & 0xFFFFFFFF)
-        else:  # BL / B / blx-range branch: 24-bit word-relative to pc+8
+            struct.pack_into("<I", buf, o, (ta + add) & 0xFFFFFFFF)
+        else:  # BL / B / blx-range branch: imm = (S + A - P) >> 2 (RELA A is -8)
             instr = struct.unpack_from("<I", buf, o)[0]
-            imm = ((ta - (addr + o + 8)) >> 2) & 0xFFFFFF
+            imm = ((ta + add - (addr + o)) >> 2) & 0xFFFFFF
             struct.pack_into("<I", buf, o, (instr & 0xFF000000) | imm)
     return bytes(buf), set(blind)
 
@@ -182,11 +209,13 @@ def linkcheck(name, addr, size, mod, name_index):
             rl = by_off.get(i)
             if rl is not None:
                 rt = rom_target(target, i, rl["type"], addr)
-                if is_benign(rt, rl["addr"], prefer):
+                rw = int.from_bytes(target[i:i + 4], "little")
+                if is_benign(rt, rl["addr"], prefer) or is_interwork(rw, rt, rl["addr"]):
                     benign += 1
                     continue
+            tgt = (rl["addr"] + rl.get("add", 0)) & 0xFFFFFFFF if rl and rl["addr"] is not None else None
             genuine.append({"off": f"+0x{i:x}", "sym": rl["sym"] if rl else None,
-                            "target": (f"0x{rl['addr']:08x}" if rl and rl["addr"] is not None else None)})
+                            "target": (f"0x{tgt:08x}" if tgt is not None else None)})
         if genuine:
             return {"name": name, "module": mod, "addr": f"0x{addr:08x}", "verdict": "WRONG",
                     "diffs": genuine, "blind": len(blind)}

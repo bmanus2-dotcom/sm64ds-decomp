@@ -29,30 +29,46 @@ These are reported BENIGN, not WRONG. The check reads the trampoline/twin from t
 it is best-effort across overlapping overlays; a few benign cases it cannot confirm stay in
 WRONG conservatively.
 
-## Corpus result (6,317 banked matches, 2026-06-29, after the second fix pass)
+## Two linker behaviors the checker must model (else it false-flags correct source)
+
+`linkcheck` reconstructs the LINKED bytes, so it has to link the way the real linker does.
+Two cases were initially mishandled and reported correct source as WRONG:
+
+- relocation addend. mwccarm emits RELA relocations; every base+offset access (struct
+  field, array element) is encoded as the symbol's base address plus a nonzero `r_addend`,
+  e.g. `&data[i].field`. Linking only the base mis-links the slot. The linked word is
+  `base + addend` (REL objects carry the addend in the slot instead). `func_relocs_typed`
+  now captures it and `link_function` applies it. This cleared the multi-slot same-base
+  false positives (a struct array touched through one symbol at several field offsets).
+- ARM->Thumb interworking. A `BL` whose target is a Thumb symbol (a 2-byte-aligned address
+  such as the SDK `CpuSet` / `WaitByLoop`) is rewritten by the linker to `BLX` (the H bit
+  carries the halfword). The candidate object emits a plain `BL` relocation. `is_interwork`
+  recognizes a `BLX` ROM slot whose destination equals the address the candidate names and
+  reports BENIGN: only the encoding differs, the call is correct.
+
+## Corpus result (7,180 banked matches, 2026-06-29, after the full fix pass)
 
 | verdict | count | meaning |
 |---|---:|---|
-| VERIFIED | 4,587 | every reloc resolved and the linked bytes equal the ROM |
-| BENIGN | 16 | only veneer/twin diffs; source is correct |
-| BLIND | 1,701 | a reloc targets an invented name with no address, unverifiable |
-| WRONG | 12 | a resolved reloc links to bytes that differ from the ROM |
-| NO-REPRO | 1 | source no longer reproduces ROM bytes (pre-existing) |
+| VERIFIED | 5,366 | every reloc resolved and the linked bytes equal the ROM |
+| BENIGN | 26 | only veneer / twin / ARM->Thumb interworking diffs; source is correct |
+| BLIND | 1,787 | a reloc targets an invented name with no address, unverifiable |
+| WRONG | 1 | a resolved reloc links to bytes that differ from the ROM |
 
-The second pass fixed 39 more WRONG destinations (51 → 12). The fixes were: wrong overlay
-prefix in `data_ovXXX_ADDR` symbol names (`__sinit` initializers and overlay-local
-globals), swapped 4th/5th arguments to `func_020733a8` ctor/dtor pair (pool constant
-ordering), and swapped argument lines in `func_02030aa4`.
+An initial pass fixed 53 genuine wrong destinations; this pass fixed 50 more and corrected
+the two checker behaviors above, taking WRONG from 57 to 1. The fixes were mechanical
+symbol repoints (rename the wrong identifier to the canonical name of the address the ROM
+uses) verified per function with `linkcheck` (not WRONG, still reproduces) and the byte
+oracle, reverting any that perturbed codegen. Shapes fixed: data symbols resolving to the
+wrong overlay, swapped pointer pairs (e.g. `Player`'s ctor/dtor callback pair registered in
+the wrong order), and `__sinit` initializers registering wrong data pointers. The two
+`_ZThn80_N9Animation{D0,D1}Ev` thunks were re-identified as `ModelAnim2`'s secondary-base
+thunks (they branch to `_ZN10ModelAnim2D{0,1}Ev`) and renamed.
 
-## Remaining 12 WRONG entries
-
-| name | reason |
-|---|---|
-| `_ZN14BlendModelAnimD1Ev` | `_ZdlPv` → different `operator delete` variant; likely veneer unconfirmed |
-| 6× `_ZThn80_N9Animation{D0,D1}Ev` | call `_ZN9AnimationD1Ev` but ROM uses `ModelAnim2` D1; class name mismatch in nearmiss DB |
-| `func_0206a318`, `func_0206a3a4`, `func_0206a5c0` | BL→BLX false positive: `WaitByLoop`/`CpuSet` are Thumb; linkcheck encodes BL but ROM has BLX |
-| `func_ov005_020c0250` | `data_020a0de8` accessed as struct array; ROM has byte-offset symbols `+1/+2/+3` |
-| `func_ov098_02137eec` | `data_ov098_0213c380[idx2].b/.c` — ROM pool constants are `base+4`/`base+8`; struct layout differs |
+The lone remaining WRONG is `_ZThn80_N10ModelAnim2D0Ev`: the secondary-base DELETING
+destructor thunk. The ROM branches it to `D0` (0x02016320); CodeWarrior emits it as a
+tail-branch to `D1` for this class under all 11 toolchain versions, so source cannot
+reproduce the `D0` delegation. Left as a documented codegen residual, not a source error.
 
 ## The residual blind spot
 
@@ -72,15 +88,7 @@ python tools/linkcheck.py --json out.json
 
 ## Next
 
-The 12 residual WRONG entries fall into three categories:
-
-1. **Animation thunks** — `_ZThn80_N9AnimationD{0,1}Ev` thunks call `_ZN9AnimationD1Ev`
-   but ROM calls a `ModelAnim2` destructor. Fix requires changing the class name from
-   `Animation` to `ModelAnim2` in the nearmiss DB (`nearmiss/db.jsonl`).
-2. **BL→BLX false positives** — `func_0206a318/a3a4/a5c0` call `WaitByLoop`/`CpuSet`
-   (Thumb entry points). The candidate object emits a `BL` placeholder but the linker
-   writes a `BLX`; `link_function()` keeps the source `0xEB` upper byte, ROM has `0xFA/0xFB`.
-   These are not genuine wrong matches — fix requires `linkcheck` to handle the ARM→Thumb
-   BL→BLX H-bit rewrite in `link_function()`.
-3. **Struct layout / byte-offset** — `func_ov005_020c0250` and `func_ov098_02137eec` need
-   source restructuring to generate the exact pool constants the ROM uses.
+WRONG is down to 1 (the `ModelAnim2` D0 thunk above). Re-run `linkcheck.py` after any
+harvest batch so newly banked matches with wrong destinations are caught while the source
+is fresh; the same repoint recipe applies. Closing more BLIND would need a fuller symbol
+table (addresses for the invented names).
