@@ -29,6 +29,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--output", required=True, help="Workflow task .output file")
     ap.add_argument("--wl", default=str(REPO / "progress" / "wl_ab.jsonl"))
+    ap.add_argument("--no-park", action="store_true",
+                    help="do not append misses to nonmatching.jsonl (refine batches: "
+                         "the near-miss DB + refine_attempted.txt already track them)")
     args = ap.parse_args()
 
     res = find_result(json.load(open(args.output, encoding="utf-8")))
@@ -50,17 +53,33 @@ def main():
     for l in open(args.wl, encoding="utf-8"):
         if l.strip():
             r = json.loads(l); rows[r["name"]] = r
+    divs = {r["name"]: r.get("divergences") for r in res["results"]}
     miss = [r["name"] for r in res["results"] if not r["matched"]]
-    nm = REPO / "progress" / "nonmatching.jsonl"
-    with nm.open("a", encoding="utf-8") as f:
-        for n in miss:
-            r = rows.get(n)
-            if r:
-                f.write(json.dumps({"addr": r["addr"], "name": n,
-                                    "size": int(r["size"], 16), "module": r["module"],
-                                    "divergences": 2,
-                                    "reason": f"fan-out miss ({res.get('model','?')} {res.get('tokensPerLanded')}/landed)"}) + "\n")
-    print(f"parked {len(miss)} misses -> progress/nonmatching.jsonl")
+    if args.no_park:
+        print(f"{len(miss)} misses NOT parked (--no-park)")
+    else:
+        nm = REPO / "progress" / "nonmatching.jsonl"
+        with nm.open("a", encoding="utf-8") as f:
+            for n in miss:
+                r = rows.get(n)
+                if r:
+                    d = divs.get(n)
+                    f.write(json.dumps({"addr": r["addr"], "name": n,
+                                        "size": int(r["size"], 16), "module": r["module"],
+                                        "divergences": d if d is not None else 2,
+                                        "reason": f"fan-out miss ({res.get('model','?')} {res.get('tokensPerLanded')}/landed)"}) + "\n")
+        print(f"parked {len(miss)} misses -> progress/nonmatching.jsonl")
+
+    # ingest near-misses into the committed DB (standing rule: never discard a close attempt)
+    nms = res.get("nearMisses") or []
+    if nms:
+        tmp2 = pathlib.Path(tempfile.gettempdir()) / "coddog_nearmiss.jsonl"
+        with open(tmp2, "w", encoding="utf-8") as f:
+            for x in nms:
+                f.write(json.dumps({"name": x["name"], "c_source": x["c_source"]}) + "\n")
+        subprocess.run([sys.executable, str(REPO / "tools" / "nearmiss_db.py"), "ingest",
+                        "--seeds", str(tmp2), "--worklist", args.wl,
+                        "--label", f"fanout-{res.get('model', '?')}"], check=True)
 
 
 if __name__ == "__main__":

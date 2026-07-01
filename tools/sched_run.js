@@ -22,11 +22,12 @@ const SCHEMA = {
   properties: {
     name: { type: 'string' },
     matched: { type: 'boolean', description: 'true ONLY if abverify printed exactly MATCH' },
-    c_source: { type: 'string', description: 'exact final source (//cpp first line if C++)' },
+    c_source: { type: 'string', description: 'the LOWEST-divergence source you produced (//cpp first line if C++)' },
     attempts: { type: 'integer' },
+    divergences: { type: 'integer', description: 'divergence count of c_source per abverify; 0 when matched, 999 if nothing ever compiled' },
     note: { type: 'string', description: 'one line: what worked, or the wall it hit' },
   },
-  required: ['name', 'matched', 'c_source', 'attempts', 'note'],
+  required: ['name', 'matched', 'c_source', 'attempts', 'divergences', 'note'],
 }
 
 function prompt(name) {
@@ -44,7 +45,9 @@ WRITE your candidate to _abwork/${name}.src   (run: mkdir -p _abwork)
 
 VERIFY:
   python tools/abverify.py --name ${name} --src _abwork/${name}.src
-Prints one of: MATCH | NOMATCH (compiled ...) | COMPILE_FAIL | NO_SUCH_FUNC . Only MATCH counts. Iterate up to 6 attempts.
+MATCH = done. On NOMATCH it prints the exact mismatching instructions (target vs yours) then "NOMATCH divergences=N/words" - fix ONLY those instructions and re-verify. Up to 6 attempts, but STOP EARLY if divergences do not improve for 2 consecutive attempts. Keep whichever attempt had the LOWEST divergences in _abwork/${name}.src (re-write it if a later attempt was worse) and report that one - a close near-miss is banked and valuable, never discard it.
+If you are within ~6 divergences and stalled, read notes/pret-idioms.md and notes/mwccarm-codegen.md (full idiom catalogue) before giving up.
+KNOWN FLOOR - stop, do not grind: residuals that are pure instruction ORDERING (load/store batching order, cond-move polarity) or a re-materialized base address folded into the first access. Those are documented compiler-floor walls; report the near-miss and finish.
 
 mwccarm idioms (cheap levers on a byte-diff): register allocation follows source DECLARATION ORDER - permute top-of-block C89 local decls; reuse a var vs a new one to save a reg; plain u32/int over enum for intermediates; keep ternaries as ternaries; mirror the ROM's loop form and branch direction; for an address materialized in a reg (add rX,base,#OFF then load) try void* byte arithmetic (u32)((void*)p+off); materialize a bool (int b=(x==k); if(b)) to force movne/moveq/cmp. Start from the sibling scaffold and edit toward the disasm.
 
@@ -69,6 +72,7 @@ return {
   landedNames: landed.map((r) => r.name),
   outputTokens: tokens,
   tokensPerLanded: landed.length ? Math.round(tokens / landed.length) : null,
-  results: results.map((r) => ({ name: r.name, matched: r.matched, attempts: r.attempts, note: r.note })),
+  results: results.map((r) => ({ name: r.name, matched: r.matched, attempts: r.attempts, divergences: r.divergences, note: r.note })),
   sources: Object.fromEntries(landed.filter((r) => r.c_source).map((r) => [r.name, r.c_source])),
+  nearMisses: results.filter((r) => !r.matched && r.c_source).map((r) => ({ name: r.name, c_source: r.c_source })),
 }

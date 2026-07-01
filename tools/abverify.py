@@ -3,7 +3,10 @@ Compiles a candidate and relocation-aware byte-compares it to the ROM.
 
   python tools/abverify.py --name NAME --src cand.src [--wl progress/wl_ab.jsonl]
 
-Prints exactly one of: MATCH | NOMATCH (compiled ...) | COMPILE_FAIL | NO_SUCH_FUNC
+Final line is one of: MATCH | NOMATCH divergences=N/words | NOMATCH size: ... |
+COMPILE_FAIL | NO_SUCH_FUNC. On NOMATCH with equal sizes, the mismatching
+instructions (target vs candidate, reloc slots wildcarded) are printed first,
+capped, so the caller can converge instead of guessing.
 Exit 0 on MATCH, 1 on any non-match, 2 if the name is not in the worklist.
 Target bytes come from the worklist row's target_hex, so no ROM path is needed.
 """
@@ -37,7 +40,30 @@ with tempfile.TemporaryDirectory() as td:
     obj = M.compile_c(cfile, M.CANONICAL, S.CPP_FLAGS if cpp else M.DEFAULT_FLAGS)
 if obj is None:
     print("COMPILE_FAIL"); sys.exit(1)
-code, _ = M.extract_func(obj, a.name)
+code, relocs = M.extract_func(obj, a.name)
 if code is None:
     print("COMPILE_FAIL"); sys.exit(1)
-print(f"NOMATCH (compiled {len(code)} bytes vs target {len(hexstr)//2})"); sys.exit(1)
+
+target = bytes.fromhex(hexstr)
+if len(code) != len(target):
+    print(f"NOMATCH size: compiled {len(code)} bytes vs target {len(target)}"); sys.exit(1)
+
+MAXLINES = 32
+shown = ndiff = 0
+for i in range(0, len(target), 4):
+    if i in relocs:
+        continue
+    tw, cw = target[i:i + 4], code[i:i + 4]
+    if tw == cw:
+        continue
+    ndiff += 1
+    if shown < MAXLINES:
+        ti = next(M.md.disasm(tw, 0), None)
+        ci = next(M.md.disasm(cw, 0), None)
+        ts = f"{ti.mnemonic} {ti.op_str}" if ti else tw.hex()
+        cs = f"{ci.mnemonic} {ci.op_str}" if ci else cw.hex()
+        print(f"  +0x{i:03x} | target: {ts:28} | yours: {cs}")
+        shown += 1
+if ndiff > shown:
+    print(f"  ... {ndiff - shown} more mismatching words")
+print(f"NOMATCH divergences={ndiff}/{len(target)//4}"); sys.exit(1)
