@@ -1,5 +1,11 @@
 """Build a harvest worklist: floor-filtered, smallest-first, untried.
 
+PREFER tools/coddog.py for the fan-out. A 2026-07-01 head-to-head (same band, same model,
+same effort) landed 71% with coddog's fuzzy opcode-similarity scheduling vs 50% with this
+smallest-first builder, at ~2.3x fewer tokens per landed function -- coddog picks functions
+that have a close already-matched sibling and attaches it as the scaffold. Use this builder
+for the floor-filtered coverage sweep / when coddog finds no good siblings in a band.
+
 The proven high-yield recipe (2026-06-21: 82% hit vs the 7% mis-targeted floor). Generates
 a worklist of small unmatched functions with the base-materialization RMW shape removed
 (those are the unmatchable floor -- they only waste fan-out tokens), sorted smallest-first.
