@@ -249,6 +249,24 @@ guard-heavy overlay code (off by ~4 instructions), and there is a reliable knob 
   temp declarations to match the disasm's arg-register assignment (the `Actor::Spawn` builder
   loop in `LoadDoorObjects`, 2026-06-27).
 
+## 6d. Floor taxonomy additions (refine batch, 2026-07-01)
+
+Two more residual classes confirmed source-invariant across many C spellings; when the diff
+shows one of these, stop early and report the near-miss:
+
+- **Pool-load of an immediate-encodable constant.** The ROM emits `ldr rX,[pc,#pool]` for a
+  small constant (0x4b; 0x64/0x66) passed as a call argument, where mwccarm always folds it to
+  `mov rX,#imm`. Literal/decimal/enum-cast/local-var forms all produce the mov (func_0201a694,
+  func_ov007_020cc4c0). Instruction-selection choice, no C99 lever found.
+- **Early-exit epilogue duplication.** `-O4,p` duplicates a short conditional epilogue
+  (`popeq/bxeq`) at an early exit where the ROM has a plain `beq` to the shared tail
+  (func_0206ce20: identical across 10 phrasings incl. guard clause, goto, do/while-break).
+  Related: an extra `add sp,sp,#imm` vs a fully if-converted merged epilogue
+  (func_ov021_02111434).
+
+Both classes live in nearmiss/db.jsonl at div 1-2; candidates for an asm-block close-out
+(sec 8) if their subsystems ever need completion.
+
 ## 7. Workflow implications
 
 - **Free tiers first, every cycle:** `clone.py` (byte-identical retarget) then `paramclone.py`

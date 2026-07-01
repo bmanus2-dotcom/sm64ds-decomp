@@ -70,8 +70,10 @@ def main():
                                         "reason": f"fan-out miss ({res.get('model','?')} {res.get('tokensPerLanded')}/landed)"}) + "\n")
         print(f"parked {len(miss)} misses -> progress/nonmatching.jsonl")
 
-    # ingest near-misses into the committed DB (standing rule: never discard a close attempt)
-    nms = res.get("nearMisses") or []
+    # ingest near-misses into the committed DB (standing rule: never discard a close attempt).
+    # Matched names are fed through too: ingest's done-check pops their stale DB entries.
+    nms = list(res.get("nearMisses") or [])
+    nms += [{"name": n, "c_source": s} for n, s in res.get("sources", {}).items()]
     if nms:
         tmp2 = pathlib.Path(tempfile.gettempdir()) / "coddog_nearmiss.jsonl"
         with open(tmp2, "w", encoding="utf-8") as f:
