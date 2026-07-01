@@ -45,6 +45,7 @@ reference/
 
 # --- Internal working files: kept local, not published ---
 knowledge/
+workbench/
 match/
 progress/
 notes/matching-log.md
@@ -57,6 +58,7 @@ vendor/
 
 # local-only, never commit
 tools/claims_key.txt
+tools/claims_handle.txt
 /scratchpad/
 
 # coddog fan-out scratch (agents write candidates here)

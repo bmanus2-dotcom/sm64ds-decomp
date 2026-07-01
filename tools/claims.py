@@ -2,7 +2,8 @@
 do not grind the same address ranges. Programmatic sibling of CLAIMS.md.
 
 Lock flow: try-lock a (module, start, end) span -> renew while working -> release when
-done. No auth token. Handle identifies this worker. Endpoints:
+done. The handle (display label) comes from CLAIMS_HANDLE / tools/claims_handle.txt /
+the OS username -- the API key is what proves identity. Endpoints:
   POST /api/claims/try-lock     {module,start,end,handle,note} -> {id,...}
   POST /api/claims/{id}/renew   {handle}
   POST /api/claims/{id}/release {handle}
@@ -27,22 +28,35 @@ import urllib.request
 import urllib.parse
 
 BASE = "https://belongto.us"
-HANDLE = "Tango Claude"
 
 
-def _load_key():
-    """CLAIMS_API_KEY env var, else the gitignored tools/claims_key.txt sibling."""
-    k = os.environ.get("CLAIMS_API_KEY")
-    if k:
-        return k.strip()
+def _load_local(env, fname):
+    """env var, else the gitignored tools/<fname> sibling."""
+    v = os.environ.get(env)
+    if v:
+        return v.strip()
     import pathlib
-    p = pathlib.Path(__file__).resolve().parent / "claims_key.txt"
+    p = pathlib.Path(__file__).resolve().parent / fname
     if p.is_file():
         return p.read_text(encoding="utf-8").strip()
     return None
 
 
-API_KEY = _load_key()
+def _default_handle():
+    """The handle is display-only (the key proves identity), but it must identify
+    THIS contributor: CLAIMS_HANDLE env / tools/claims_handle.txt, else OS user."""
+    h = _load_local("CLAIMS_HANDLE", "claims_handle.txt")
+    if h:
+        return h
+    import getpass
+    try:
+        return getpass.getuser()
+    except Exception:
+        return "anonymous"
+
+
+HANDLE = _default_handle()
+API_KEY = _load_local("CLAIMS_API_KEY", "claims_key.txt")
 
 
 def _req(path, payload=None, method="GET"):
@@ -79,40 +93,49 @@ def check(module, start, end):
     return _req(f"/api/claims/check?{q}")
 
 
-def _spans(path):
-    """{module: (start_hex, end_hex)} covering every function's addr..addr+size."""
-    by = {}
-    for line in open(path, encoding="utf-8"):
-        if not line.strip():
-            continue
-        r = json.loads(line)
-        a = int(r["addr"], 16) if isinstance(r["addr"], str) else r["addr"]
-        sz = int(r["size"], 16) if isinstance(r["size"], str) else r["size"]
-        lo, hi = by.get(r["module"], (a, a + sz))
-        by[r["module"]] = (min(lo, a), max(hi, a + sz))
-    return {m: (f"0x{lo:08x}", f"0x{hi:08x}") for m, (lo, hi) in by.items()}
-
-
 def _claim_id(res):
     """The claim id lives at res['claim']['id'] (try-lock 201 response)."""
     return res.get("claim", {}).get("id") if isinstance(res, dict) else None
 
 
-def lock_worklist(path, handle=HANDLE, note="crack-loop matching (Tango Claude)"):
-    """Lock each module's address span in the worklist. Returns {module: claim_id};
-    skips a module the check reports not free (conflicts held by someone else)."""
-    ids = {}
-    for mod, (start, end) in _spans(path).items():
-        st, cur = check(mod, start, end)
-        if isinstance(cur, dict) and cur.get("free") is False:
-            print(f"  SKIP {mod} {start}-{end}: conflicts={cur.get('conflicts')}")
-            continue
-        st, res = try_lock(mod, start, end, handle, note)
+def lock_worklist(path, handle=None, note=None):
+    """Try-lock each worklist row's exact [addr, addr+size) range; rows whose range
+    conflicts with someone else's active claim are DROPPED from the worklist file in
+    place, so the caller only dispatches functions it holds. Returns
+    {module: [claim_id, ...]}.
+
+    Per-function granularity, not module spans: two agents running the same
+    deterministic scheduler produce overlapping spans constantly, and a span skip
+    throws away every function in the module for one conflict (a live 20-candidate
+    batch locked 0/20 that way). try-lock is the atomic acquire; no check() first."""
+    handle = handle or HANDLE
+    import pathlib
+    wl = pathlib.Path(path)
+    rows = [json.loads(l) for l in wl.read_text(encoding="utf-8").splitlines() if l.strip()]
+    held, kept, dropped = {}, [], []
+    for r in rows:
+        a = int(r["addr"], 16) if isinstance(r["addr"], str) else r["addr"]
+        sz = int(r["size"], 16) if isinstance(r["size"], str) else r["size"]
+        st, res = try_lock(r["module"], f"0x{a:08x}", f"0x{a + sz:08x}", handle,
+                           note or f"crack-loop: {r['name'][:60]}")
         cid = _claim_id(res)
-        print(f"  LOCK {mod} {start}-{end}: status={st} id={cid}" + ("" if cid else f" resp={res}"))
         if cid:
-            ids[mod] = cid
-    return ids
+            held.setdefault(r["module"], []).append(cid)
+            kept.append(r)
+        else:
+            who = "?"
+            if isinstance(res, dict):
+                cs = res.get("conflicts") or ([res["claim"]] if res.get("claim") else [])
+                if cs:
+                    who = cs[0].get("handle", "?")
+            dropped.append((r["name"], who))
+    if dropped:
+        wl.write_text("".join(json.dumps(r) + "\n" for r in kept), encoding="utf-8")
+        for name, who in dropped:
+            print(f"  conflict: {name} (held by {who}) -- dropped from worklist")
+    print(f"locked {sum(len(v) for v in held.values())}/{len(rows)} function ranges "
+          f"across {len(held)} modules (handle {handle})")
+    return held
 
 
 def main():
@@ -142,8 +165,9 @@ def main():
         import pathlib
         p = pathlib.Path("progress/claims_active.json")
         ids = json.loads(p.read_text()) if p.exists() else {}
-        for mod, cid in ids.items():
-            print(f"  release {mod} {cid}: {release(cid)}")
+        for mod, v in ids.items():   # per-function locks store a list per module
+            for cid in (v if isinstance(v, list) else [v]):
+                print(f"  release {mod} {cid}: {release(cid)}")
         p.unlink(missing_ok=True)
     elif cmd == "release-ids":
         for cid in a[2:]:
