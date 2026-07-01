@@ -230,7 +230,8 @@ def main():
     order = []
     for mod in MOD.modules():
         label = "arm9" if mod["name"] == "main" else mod["name"]
-        if args.module and mod["name"] != args.module:
+        # accept either vocabulary: internal "main" or its public label "arm9"
+        if args.module and mod["name"] != ("main" if args.module == "arm9" else args.module):
             continue
         relocs = R.load_relocs_file(mod["relocs"])
         data = mod["bin"].read_bytes()

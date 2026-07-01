@@ -144,6 +144,13 @@ def main():
                 return cache[key]
             pile = [r for r in pile if any(w in catof(r).lower() for w in want)]
             cachep.write_text(_json.dumps(cache))
+        # skip seeds the permuter already failed at this exact divergence; a seed is
+        # retried only once its stored draft improves (div drops)
+        import json as _json2
+        triedp = REPO / "progress" / "permuter_tried.json"
+        tried = _json2.loads(triedp.read_text()) if triedp.exists() else {}
+        pile = [r for r in pile if tried.get(r["name"]) != r["divergences"]]
+
         mine = [r for k, r in enumerate(pile) if k % n == i][:args.limit]
         if not mine:
             print(f"[shard {i}/{n}] nothing in range.")
@@ -155,6 +162,9 @@ def main():
             print(f"[{i}/{n}] div={rec.get('divergences'):<3} {rec['name'][:44]:46} {mark}", flush=True)
             banked += res == "banked"
             improved += res == "improved"
+            if res == "nochange":
+                tried[rec["name"]] = rec["divergences"]
+                triedp.write_text(_json2.dumps(tried))
         print(f"[shard {i}/{n}] pass done: {banked} banked, {improved} improved.")
         if not args.loop or (banked == 0 and improved == 0):
             return

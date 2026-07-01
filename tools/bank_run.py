@@ -48,6 +48,13 @@ def main():
     subprocess.run([sys.executable, str(REPO / "tools" / "bank_harvest.py"),
                     "--glob", str(tmp)], check=True)
 
+    # link gate: the oracle wildcards reloc slots, so a candidate calling a wrong
+    # same-shaped callee still byte-"matches". linkcheck reconstructs the linked
+    # bytes and compares to the ROM - run it on each just-banked function and be loud.
+    for n in res["sources"]:
+        subprocess.run([sys.executable, str(REPO / "tools" / "linkcheck.py"),
+                        "--name", n], check=False)
+
     # park the misses so coddog does not re-select them
     rows = {}
     for l in open(args.wl, encoding="utf-8"):
@@ -58,19 +65,28 @@ def main():
     if args.no_park:
         print(f"{len(miss)} misses NOT parked (--no-park)")
     else:
+        # Park ONLY close, compiling misses (the nonmatching.py bar: divergences <= 12).
+        # Parking is a PERMANENT exclusion from coddog scheduling, so a function that
+        # merely failed this run (never compiled, timed out, wild draft) must fall back
+        # into the pool for a future batch/model instead.
+        parked = skipped = 0
         nm = REPO / "progress" / "nonmatching.jsonl"
         with nm.open("a", encoding="utf-8") as f:
             for n in miss:
                 r = rows.get(n)
-                if r:
-                    rec = {"addr": r["addr"], "name": n,
-                           "size": int(r["size"], 16), "module": r["module"],
-                           "reason": f"fan-out miss ({res.get('model','?')} {res.get('tokensPerLanded')}/landed)"}
-                    d = divs.get(n)
-                    if d is not None:   # only record a divergence count we actually measured
-                        rec["divergences"] = d
-                    f.write(json.dumps(rec) + "\n")
-        print(f"parked {len(miss)} misses -> progress/nonmatching.jsonl")
+                d = divs.get(n)
+                if not r:
+                    continue
+                if d is None or not (0 < d <= 12):
+                    skipped += 1
+                    continue
+                f.write(json.dumps({"addr": r["addr"], "name": n,
+                                    "size": int(r["size"], 16), "module": r["module"],
+                                    "divergences": d,
+                                    "reason": f"fan-out miss ({res.get('model','?')} {res.get('tokensPerLanded')}/landed)"}) + "\n")
+                parked += 1
+        print(f"parked {parked} close misses -> progress/nonmatching.jsonl; "
+              f"{skipped} far/non-compiling misses left in the pool")
 
     # ingest near-misses into the committed DB (standing rule: never discard a close attempt).
     # Matched names are fed through too: ingest's done-check pops their stale DB entries.

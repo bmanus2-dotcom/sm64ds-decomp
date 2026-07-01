@@ -56,7 +56,7 @@ notes/ac-decomp-comparison.md
 vendor/
 
 # local-only, never commit
-tools/claims.py
+tools/claims_key.txt
 /scratchpad/
 
 # coddog fan-out scratch (agents write candidates here)

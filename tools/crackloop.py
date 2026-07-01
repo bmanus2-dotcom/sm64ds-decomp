@@ -38,6 +38,12 @@ def run(script, *args, check=True):
 
 
 def prep(a):
+    active = REPO / "progress" / "claims_active.json"
+    if active.exists():
+        print("a batch appears to be in flight (progress/claims_active.json exists).\n"
+              "Regenerating the worklist now would swap target bytes under running agents.\n"
+              "Land it first (crackloop.py land) or release: python tools/claims.py release-active")
+        sys.exit(1)
     cd = ["--min", hex(a.min), "--max", hex(a.max), "--limit", str(a.limit),
           "--out", str(WL)]
     if a.module:
