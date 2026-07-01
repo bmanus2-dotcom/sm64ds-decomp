@@ -153,9 +153,10 @@ ROM.
 Function contributions: [RyanCopley](https://github.com/RyanCopley) hand-matched a set of
 functions across ov002, ov006, arm9, and ov034 (PR #1), including the first functions in
 ov034 and several that had resisted the automated passes.
-[andrewboudreau](https://github.com/andrewboudreau) has hand-matched a large set of functions
-across arm9 and many overlays (PRs #2, #45, #48), and contributed codegen notes on boolean
-materialization and predicated-select shapes (PR #49).
+[andrewboudreau](https://github.com/andrewboudreau) has hand-matched a large and growing set of
+functions across arm9 and many overlays (PRs #2, #45, #48, and the #50 through #60 constructor and
+static-initializer batches), contributed codegen notes on boolean materialization and
+predicated-select shapes (PR #49), and reported the scheduler bug fixed in #61.
 [Moundistz](https://github.com/Moundistz) contributed 3 matched functions and 8 nonmatching
 floor entries, plus a pass of placeholder-to-resolved callee renames across the arm9 corpus.
 
@@ -163,6 +164,10 @@ Tooling contributions: [webheadvr](https://github.com/webheadvr) made the reloca
 symbol resolver module-aware, fixing wrong-overlay symbol picks where overlay address
 ranges overlap. [andrewboudreau](https://github.com/andrewboudreau) added a relocation
 destination audit and an opt-in strict-relocs check to the verify path (PR #47).
+
+The `tools/coddog.py` fuzzy opcode-similarity scheduler was inspired by
+[Chris Lewis's writeup](https://blog.chrislewis.au/the-long-tail-of-llm-assisted-decompilation/)
+on LLM-assisted decompilation and the Coddog similarity tool it describes.
 
 ## License
 
