@@ -78,7 +78,7 @@ SFA-decomp pragma technique does not transfer; the ordering floor stays hand-fix
 ## Model choice
 
 - **Sonnet 5** is the validated default: parity with Opus 4.8 on matching at ~half the
-  cost (see [[sm64ds-sonnet5-ab]]). `grind_chunked.js` and `sched_run.js` default to it.
+  cost (see [[sm64ds-sonnet5-ab]]). `sched_run.js` defaults to it.
 - **Fable 5** (`model:"fable"`, effort `high`): most capable model. Worth it on the HARD
   residue, where borderline register-coloring near-misses may be reachable with more
   reasoning. It will NOT move the true codegen floor (materialization / ordering / CSE) --
