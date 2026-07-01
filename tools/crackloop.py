@@ -68,6 +68,13 @@ def prep(a):
         print("tools/claims.py not present (public clone) - skipping the lock step; "
               "coordinate via CLAIMS.md")
 
+    # re-read: a claims client may trim the worklist file itself (per-function locks)
+    rows = [json.loads(l) for l in WL.read_text(encoding="utf-8").splitlines() if l.strip()]
+    if not rows:
+        print("every candidate conflicted with an active claim - another agent is "
+              "working this band; re-run prep with a different band or higher --limit")
+        sys.exit(1)
+
     names = [r["name"] for r in rows]
     print(f"\n{len(names)} functions ready. Launch:")
     print(f'Workflow({{ scriptPath: "tools/sched_run.js", args: {json.dumps(names)} }})')
