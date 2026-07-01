@@ -25,11 +25,19 @@ git add src/ nearmiss/ README.md && git commit -m "Match N functions via coddog 
 ```
 
 Every step still exists standalone (coddog.py, claims.py lock-worklist/release-active,
-bank_run.py, clone.py, paramclone.py, progress.py) if a batch needs surgery. On a public
-clone without tools/claims.py (it is gitignored, holds the claims API key), prep skips
-the lock step and says so - coordinate via CLAIMS.md instead.
+bank_run.py, clone.py, paramclone.py, progress.py) if a batch needs surgery.
+tools/claims.py is committed; its API key is NOT (CLAIMS_API_KEY env var or the
+gitignored tools/claims_key.txt). Without a key, claim checks still work read-only -
+coordinate via CLAIMS.md.
 ALWAYS run `land` (or at minimum `python tools/claims.py release-active`) even on a
 stopped or failed batch, so claims do not go stale.
+
+Safety gates in `land`: every banked function is independently oracle re-verified
+(bank_harvest), then LINK-verified (tools/linkcheck.py reconstructs the linked bytes -
+catches a wrong same-shaped callee the wildcarded oracle cannot see). Only close,
+compiling misses (divergences <= 12) are parked into nonmatching.jsonl; a function that
+merely failed the run falls back into the scheduling pool. `prep` refuses to rebuild the
+worklist while a batch is in flight (progress/claims_active.json present).
 
 ## Loop economics (upgraded 2026-07-01)
 
@@ -87,7 +95,7 @@ SFA-decomp pragma technique does not transfer; the ordering floor stays hand-fix
 ## Model choice
 
 - **Sonnet 5** is the validated default: parity with Opus 4.8 on matching at ~half the
-  cost (see [[sm64ds-sonnet5-ab]]). `grind_chunked.js` and `sched_run.js` default to it.
+  cost (see [[sm64ds-sonnet5-ab]]). `sched_run.js` and `refine_run.js` default to it.
 - **Fable 5** (`model:"fable"`, effort `high`): most capable model. Worth it on the HARD
   residue, where borderline register-coloring near-misses may be reachable with more
   reasoning. It will NOT move the true codegen floor (materialization / ordering / CSE) --

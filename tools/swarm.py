@@ -45,6 +45,8 @@ LINE_RE = re.compile(
 
 # ----------------------------------------------------------------------------- targets
 def load_done():
+    """(module, addr) pairs from the ledger. Keyed like sweep.load_done - overlays
+    share address space, so an addr-only set is a cross-module trap."""
     done = set()
     if MATCHED.is_file():
         for line in MATCHED.read_text(errors="ignore").splitlines():
@@ -52,7 +54,8 @@ def load_done():
             if not line:
                 continue
             try:
-                done.add(int(json.loads(line)["addr"], 0))
+                o = json.loads(line)
+                done.add((o.get("module", "arm9"), int(o["addr"], 0)))
             except Exception:
                 pass
     return done
@@ -74,7 +77,7 @@ def enumerate_targets(lo_size, hi_size, mode, count):
             continue
         if not (BASE <= addr < limit):
             continue
-        if addr in done:
+        if ("arm9", addr) in done:      # enumerate_targets is arm9-only
             continue
         out.append({"name": name, "addr": addr, "size": size, "mode": fmode})
         if count and len(out) >= count:

@@ -113,9 +113,14 @@ def load_db():
 
 
 def save_db(db):
+    """Atomic rewrite: db.jsonl is a committed file; a crash mid-write must not
+    truncate it. Write a sibling temp then os.replace."""
+    import os
     DB.parent.mkdir(parents=True, exist_ok=True)
     items = sorted(db.values(), key=lambda r: (r.get("divergences") if r.get("divergences") is not None else 1e9))
-    DB.write_text("".join(json.dumps(r) + "\n" for r in items), encoding="utf-8")
+    tmp = DB.with_name(DB.name + ".tmp")
+    tmp.write_text("".join(json.dumps(r) + "\n" for r in items), encoding="utf-8")
+    os.replace(tmp, DB)
 
 
 def load_meta(worklist):

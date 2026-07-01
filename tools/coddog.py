@@ -133,6 +133,8 @@ def main():
     ap.add_argument("--explain", default=None, help="print one function's closest matched siblings, then exit")
     ap.add_argument("--out", default=None, help="write worklist JSONL (fuzzy-scheduled). omit = summary only")
     args = ap.parse_args()
+    if args.module == "main":       # accept either vocabulary; labels here use "arm9"
+        args.module = "arm9"
 
     t0 = time.time()
     gsyms = R.load_all_syms()

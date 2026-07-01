@@ -244,6 +244,21 @@ def main():
     name_index = RA.build_name_index()
 
     if args.name:
+        if args.addr is None or args.size is None:
+            # resolve addr/size/module from the ledger so `--name X` works standalone
+            for l in (REPO / "progress" / "matched.jsonl").read_text().splitlines():
+                if l.strip():
+                    e = json.loads(l)
+                    if e["name"] == args.name:
+                        a = e["addr"]
+                        args.addr = int(a, 16) if isinstance(a, str) else a
+                        s = e["size"]
+                        args.size = int(s, 16) if isinstance(s, str) else s
+                        args.module = args.module or e["module"]
+                        break
+        if args.addr is None or args.size is None:
+            print(f"{args.name}: not in progress/matched.jsonl; pass --addr/--size/--module")
+            return
         r = linkcheck(args.name, args.addr, args.size, args.module or "arm9", name_index)
         print(json.dumps(r, indent=1))
         return
