@@ -55,17 +55,17 @@ STRUCTURAL LEVERS (these fix what the permuter cannot; pick by what the diff sho
 - load width/signedness: u8/s8/u16/s16 local or cast flips ldrb/ldrsb/ldrh/ldrsh
 - push-set / frame off by a register: change how many locals straddle calls - reuse a var, re-emit a global/field inline instead of hoisting it, or reorder the top-of-block C89 declarations (mwccarm allocates in DECLARATION ORDER)
 - register coloring: *(T*)&G vs G[0] access form; materialize a bool (int b=(x==k); if(b)) for movne/moveq
-- two-word copy batching (ld,ld,st,st): int temps + a fake dependency `dst_a = b ? a : a;` pins the load order without changing the value
+- two-word copy batching (ld,ld,st,st): int temps + a fake dependency 'dst_a = b ? a : a;' pins the load order without changing the value
 - prologue order (vptr load before homing this): compile as //cpp and call through a REAL vtable struct with dummy virtual slots - C fn-ptr casts always home first
-- blocked narrowing: reassign before the call (`dh = (s16)(h - dh);` as a statement) to stop copy-propagation folding the cast into the arg
+- blocked narrowing: reassign before the call ('dh = (s16)(h - dh);' as a statement) to stop copy-propagation folding the cast into the arg
 - branch to the SHARED final epilogue from a nested switch: break out of both switches and put the tail in an else
-- pointer-induction loop reduced away: try `#pragma opt_strength_reduction off` above the function (this pragma WORKS; scheduling/peephole are ignored)
-- DUPLICATED early-exit epilogue (popeq/bxeq repeated instead of a beq to the shared tail): `#pragma optimize_for_size on` above the function
-- halfword/byte access at offset >= 0x100 in the target with a materialized base: that is ENCODING-forced - plain `*(short*)(p+0x100) = k` reproduces it; and a base passed as `this`/call-arg materializes too (Sub *b = &c->sub; b->m(...))
+- pointer-induction loop reduced away: try '#pragma opt_strength_reduction off' above the function (this pragma WORKS; scheduling/peephole are ignored)
+- DUPLICATED early-exit epilogue (popeq/bxeq repeated instead of a beq to the shared tail): '#pragma optimize_for_size on' above the function
+- halfword/byte access at offset >= 0x100 in the target with a materialized base: that is ENCODING-forced - plain '*(short*)(p+0x100) = k' reproduces it; and a base passed as 'this'/call-arg materializes too (Sub *b = &c->sub; b->m(...))
 - stack slots optimized away: a volatile array keeps them live
 For the full catalogue read notes/pret-idioms.md and notes/mwccarm-codegen.md (sec 6e has the newest levers).
 
-KNOWN FLOOR - if the residual is a base address the ROM computes into a register (add rX,base,#imm then [rX]) where your C folds it into [base,#imm], or a pure two-word load/store batching order, stop: it is a documented compiler wall. Report your best and finish.
+KNOWN FLOOR - a materialized base (add rX,base,#imm then [rX] where your C folds to [base,#imm]) is only a true wall when ALL THREE hold: word-width access, ldr/str-encodable offset, and the pointer never used as a value. FIRST check the two reproducible triggers: (1) is any access in the group halfword/byte at offset >= 0x100? then the plain cast form materializes; (2) does the ROM pass rX to a call (bl/blx, incl. virtual dispatch)? then take the address into a pointer and pass it (Sub *b = &c->sub; b->m(...)). If all three floor conditions genuinely hold, or the residual is pure two-word store-EMISSION order, stop and report your best.
 
 CONSTRAINTS: do NOT edit anything under src/ or progress/ or nearmiss/ . Only write under _abwork/ .
 

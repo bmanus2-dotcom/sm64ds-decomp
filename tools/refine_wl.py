@@ -43,6 +43,9 @@ def main():
     ap.add_argument("--out", default=str(REPO / "progress" / "wl_refine.jsonl"))
     ap.add_argument("--include-all-cats", action="store_true",
                     help="skip category routing (take everything under --max-div)")
+    ap.add_argument("--only-category", default=None,
+                    help="substring filter: take ONLY drafts whose category matches "
+                         "(e.g. 'base materialization' for a 6g-trigger recheck batch)")
     args = ap.parse_args()
 
     rows = [json.loads(l) for l in (REPO / "nearmiss" / "db.jsonl")
@@ -79,7 +82,10 @@ def main():
                 cat = "error"
             cache[key] = cat
         r["category"] = cat
-        if args.include_all_cats or cat in REFINE_CATS:
+        if args.only_category:
+            if args.only_category.lower() in cat.lower():
+                chosen.append(r)
+        elif args.include_all_cats or cat in REFINE_CATS:
             chosen.append(r)
     CACHE.parent.mkdir(exist_ok=True)
     CACHE.write_text(json.dumps(cache))
