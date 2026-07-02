@@ -1,1 +1,20 @@
-C:\Users\bmanu\Documents\sm64ds-decomp\match\auto\0x02057e48.c
+typedef unsigned int u32;
+
+extern u32 _ZN3IRQ7DisableEv(void);
+extern void _ZN3IRQ7RestoreEj(u32 prev);
+
+typedef struct {
+    u32 unk[4];
+    u32 unk10;
+} IRQState;
+
+extern IRQState gIRQState; // 0x020a6134
+
+u32 func_02057e48(u32 newVal) {
+    u32 r5 = newVal;
+    u32 saved = _ZN3IRQ7DisableEv();
+    u32 r4 = gIRQState.unk10;
+    gIRQState.unk10 = r5;
+    _ZN3IRQ7RestoreEj(saved);
+    return r4;
+}

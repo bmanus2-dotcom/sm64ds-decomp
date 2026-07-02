@@ -1,1 +1,23 @@
-C:/Users/bmanu/Documents/sm64ds-decomp/match/auto/0x0205d23c.c
+typedef unsigned int u32;
+
+struct Node {
+    void *key;
+    struct Node *next;
+};
+
+extern struct Node *gNodeList_020a8048;
+
+void *func_0205d304(void);
+u32 _ZN3IRQ7DisableEv(void);
+void _ZN3IRQ7RestoreEj(u32 state);
+
+struct Node *func_0205d23c(void) {
+    void *r5 = func_0205d304();
+    u32 irqState = _ZN3IRQ7DisableEv();
+    struct Node *r4 = gNodeList_020a8048;
+    while (r4 != 0 && r4->key != r5) {
+        r4 = r4->next;
+    }
+    _ZN3IRQ7RestoreEj(irqState);
+    return r4;
+}
