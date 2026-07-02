@@ -329,6 +329,12 @@ Re-check a "materialization floor" diagnosis against these two triggers before g
 up - some parked entries may be misclassified encoding/arg-pass cases. Tried and dead:
 C++ references, reference-to-array, inline member fns via this (all fold identically).
 
+**RECHECK COMPLETE (2026-07-01, 16-agent batch armed with the triggers): 0/16.** Every
+"base materialization / addressing" draft in the recheck confirmed all three floor
+conditions case-by-case; the categorizer was right. The class is RETIRED from paid
+refine attempts - remaining paths are the asm escape hatch (policy pending) or
+reversing mwccarm's fold heuristic directly.
+
 ## 7. Workflow implications
 
 - **Free tiers first, every cycle:** `clone.py --apply` (byte-identical retarget) then
