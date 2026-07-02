@@ -113,8 +113,13 @@ def land(a):
     if a.refine:
         bank.append("--no-park")
     run("bank_run.py", *bank, check=False)
-    run("clone.py", "--apply", check=False)      # free tiers are dry-run by default
-    run("paramclone.py", "--apply", check=False)
+    # Free tiers run DRY (report only) until the blocking reloc-destination gate
+    # (PR #64) is in ledger.bank: clone/paramclone retarget byte-identical siblings
+    # but can carry the source's reloc symbols - 14 wrong-table PMF clones banked
+    # 2026-07-02 that only linkcheck caught (all reverted). Bank clone candidates
+    # by hand only after linkcheck verifies them.
+    run("clone.py", check=False)
+    run("paramclone.py", check=False)
     try:
         sys.path.insert(0, str(TOOLS))
         import claims
