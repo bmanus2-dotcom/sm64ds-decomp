@@ -70,6 +70,11 @@ compiling drafts a few instructions off. The refine specialist fixes STRUCTURAL 
 the permuter cannot (branch/store order, loop form, && chains, arithmetic idiom, load
 width, push-set). Validated: 49 recovered at ~100K tok/landed on the backlog.
 
+The near-miss DB is SHARED (committed), so refine batches are claims-coordinated too:
+`crackloop.py refine` locks each chosen draft's address range per-function and drops
+conflicted drafts (the other agent is already refining them); `land --refine` releases.
+Use the post-lock launch line it prints, not refine_wl's pre-lock one.
+
 ```sh
 python tools/crackloop.py refine --max-div 6 --limit 20   # category-routed export, prints launch line
 # Workflow({ scriptPath: "tools/refine_run.js", args: <names[]> })
@@ -120,6 +125,16 @@ touched (e.g. 0x280-0x400), which resurfaces high-similarity clusters (the large
 initializers were still a rich vein at 0x200-0x400). When even fresh bands come in low, the
 accessible vein is worked: switch to the free tiers (clone/paramclone, recurring.py -> new
 templates), the REFINE tier below, and hand-fix, and stop the paid fresh fan-out.
+
+**Two agents, one band (measured 2026-07-01):** both sides run the same deterministic
+scheduler, so simultaneous preps pick the SAME functions - the coworker's first 0x280-0x400
+prep conflicted 20/20 with our locks. Per-function claims locking absorbs this (conflicted
+rows drop, the rest proceed), but the survivor picks are SECOND-TIER scaffolds: their
+disjoint batch ran 1/20 (5%) at ~2.1M tokens/landed vs first-tier picks at ~71% earlier.
+Lesson: fresh fan-out in a band someone else is actively working is a dead vein - the
+second agent should run REFINE (claims-coordinated) or take a different band entirely.
+In a contested band, request extra width (higher --limit) so the post-lock batch is still
+worth launching.
 
 Measured same day, same model (Sonnet 5): the refine tier converted 5/16 (31%) of the
 STUCK near-miss backlog at ~107K tok/landed - 2.5x cheaper per landed function than fresh

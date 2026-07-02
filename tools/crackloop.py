@@ -59,20 +59,19 @@ def prep(a):
     try:
         sys.path.insert(0, str(TOOLS))
         import claims
-        ids = claims.lock_worklist(str(WL))
-        (REPO / "progress" / "claims_active.json").write_text(json.dumps(ids))
-        if ids:
-            kept = [r for r in rows if r["module"] in ids]
-            if len(kept) != len(rows):
-                WL.write_text("".join(json.dumps(r) + "\n" for r in kept), encoding="utf-8")
-                print(f"trimmed worklist to locked modules: {len(kept)}/{len(rows)} rows kept")
-            rows = kept
-        else:
-            print("WARNING: no locks obtained (service down?) - keeping the full "
-                  "worklist; coordinate manually via CLAIMS.md")
+        held = claims.lock_worklist(str(WL))   # trims conflicted rows from the file itself
+        (REPO / "progress" / "claims_active.json").write_text(json.dumps(held))
     except ImportError:
         print("tools/claims.py not present (public clone) - skipping the lock step; "
               "coordinate via CLAIMS.md")
+
+    # re-read: the lock step drops conflicted rows from the worklist file in place
+    rows = [json.loads(l) for l in WL.read_text(encoding="utf-8").splitlines() if l.strip()]
+    if not rows:
+        print("no lockable candidates left - either another agent holds this band "
+              "(re-run with a different band or a higher --limit for slack) or the "
+              "claims service is unreachable (python tools/claims.py check ...)")
+        sys.exit(1)
 
     names = [r["name"] for r in rows]
     print(f"\n{len(names)} functions ready. Launch:")
@@ -80,7 +79,29 @@ def prep(a):
 
 
 def refine(a):
+    active = REPO / "progress" / "claims_active_refine.json"
+    if active.exists():
+        print("a refine batch appears to be in flight (claims_active_refine.json exists); "
+              "land it first (crackloop.py land --refine)")
+        sys.exit(1)
     run("refine_wl.py", "--max-div", str(a.max_div), "--limit", str(a.limit))
+    wlr = REPO / "progress" / "wl_refine.jsonl"
+    try:
+        sys.path.insert(0, str(TOOLS))
+        import claims
+        if wlr.exists() and wlr.read_text(encoding="utf-8").strip():
+            held = claims.lock_worklist(str(wlr))   # both sides refine the shared DB head
+            active.write_text(json.dumps(held))
+            rows = [json.loads(l) for l in wlr.read_text(encoding="utf-8").splitlines() if l.strip()]
+            if not rows:
+                print("every refine draft conflicted with an active claim - the other "
+                      "agent is refining this head; try later or raise --limit")
+                sys.exit(1)
+            names = [r["name"] for r in rows]
+            print(f"\n{len(names)} drafts locked. Launch (use THIS line, post-lock):")
+            print(f'Workflow({{ scriptPath: "tools/refine_run.js", args: {json.dumps(names)} }})')
+    except ImportError:
+        pass
     print("\nthen land with: python tools/crackloop.py land --output <task.output> --refine")
 
 
@@ -92,13 +113,22 @@ def land(a):
     run("bank_run.py", *bank, check=False)
     run("clone.py", "--apply", check=False)      # free tiers are dry-run by default
     run("paramclone.py", "--apply", check=False)
-    if not a.refine:
-        try:
-            sys.path.insert(0, str(TOOLS))
-            import claims  # noqa: F401
+    try:
+        sys.path.insert(0, str(TOOLS))
+        import claims
+        if a.refine:
+            p = REPO / "progress" / "claims_active_refine.json"
+            if p.exists():
+                ids = json.loads(p.read_text())
+                for mod, v in ids.items():
+                    for cid in (v if isinstance(v, list) else [v]):
+                        claims.release(cid)
+                p.unlink()
+                print("released refine claims")
+        else:
             subprocess.run([sys.executable, str(TOOLS / "claims.py"), "release-active"], check=False)
-        except ImportError:
-            pass
+    except ImportError:
+        pass
     run("progress.py", check=False)
     print("\nbatch landed. Commit when ready: git add src/ nearmiss/ README.md && "
           "git commit -m \"Match N functions via coddog fan-out (XX.X%)\"")
