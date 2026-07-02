@@ -350,6 +350,23 @@ conditions case-by-case; the categorizer was right. The class is RETIRED from pa
 refine attempts - remaining paths are the asm escape hatch (policy pending) or
 reversing mwccarm's fold heuristic directly.
 
+**RETIREMENT LIFTED (2026-07-02): the u64-mask laundering idiom IS the lever.**
+`*(int *)(((int)base + 0xOFF) & 0xFFFFFFFFFFFFFFFF) |= x` forces the materialized
+`add rX, base, #OFF` + `[rX]` form - the identity AND routes the address through
+64-bit arithmetic, which the front-end cannot fold into an addressing mode. It was
+sitting in three VERIFIED corpus files all along (func_0200d064, func_ov006_020ded00,
+and tonight's func_ov007_020c9f10, whose agent mined it from the corpus). Confirmed
+on two freshly-retired floor drafts: both byte-MATCH on first application
+(func_ov072_0211f9c4, Player::St_Squish_Init). A mechanical sweep applies it across
+the whole backlog - see the crack-loop runbook. The floor sections above remain
+correct about PLAIN C forms; the laundered form escapes them.
+
+**The "pool-load of an immediate-encodable constant" class (6d) was a MISDIAGNOSIS**
+(2026-07-02, func_0201a614): the pool slot is not a constant - it is a SYMBOL ADDRESS
+(a reloc; `(int)&overlay_75`), whose unrelocated low byte read as 0x4b. When a diff
+shows a pool load where you wrote a small constant, check whether the slot is a reloc
+in the target and pass an address instead.
+
 ## 7. Workflow implications
 
 - **Free tiers first, every cycle:** `clone.py --apply` (byte-identical retarget) then

@@ -65,7 +65,7 @@ STRUCTURAL LEVERS (these fix what the permuter cannot; pick by what the diff sho
 - stack slots optimized away: a volatile array keeps them live
 For the full catalogue read notes/pret-idioms.md and notes/mwccarm-codegen.md (sec 6e has the newest levers).
 
-KNOWN FLOOR - a materialized base (add rX,base,#imm then [rX] where your C folds to [base,#imm]) is only a true wall when ALL THREE hold: word-width access, ldr/str-encodable offset, and the pointer never used as a value. FIRST check the two reproducible triggers: (1) is any access in the group halfword/byte at offset >= 0x100? then the plain cast form materializes; (2) does the ROM pass rX to a call (bl/blx, incl. virtual dispatch)? then take the address into a pointer and pass it (Sub *b = &c->sub; b->m(...)). If all three floor conditions genuinely hold, or the residual is pure two-word store-EMISSION order, stop and report your best.
+MATERIALIZED BASE (add rX,base,#imm then [rX] where your C folds to [base,#imm]): the LEVER is the u64-mask laundering idiom - *(int *)(((int)base + 0xOFF) & 0xFFFFFFFFFFFFFFFF) - the identity AND blocks offset folding and forces the add. Verified on multiple previously-floor functions. Also check: halfword/byte at offset >= 0x100 materializes from a plain cast; a base the ROM passes to a call materializes via a pointer arg (Sub *b = &c->sub; b->m(...)). If the residual is pure two-word store-EMISSION order, stop and report your best.
 
 CONSTRAINTS: do NOT edit anything under src/ or progress/ or nearmiss/ . Only write under _abwork/ .
 
