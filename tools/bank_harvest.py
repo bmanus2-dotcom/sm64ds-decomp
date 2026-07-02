@@ -1,6 +1,9 @@
 """Central harvest banker. Collects {name,c_source} JSONL produced by fan-out agents,
-INDEPENDENTLY re-verifies each via the oracle (never trusts agent say-so), and banks the
-real byte-matches to src/<name>.c(pp) + progress/matched.jsonl (tag 'harvest'). Resilient
+INDEPENDENTLY re-verifies each via the oracle (never trusts agent say-so), checks that
+every relocation the object emits points where config/**/relocs.txt says (the byte
+compare wildcards reloc slots, so a wrong same-shaped callee would otherwise pass --
+--no-strict skips this), and banks the real byte-matches to src/<name>.c(pp) +
+progress/matched.jsonl (tag 'harvest'). Resilient
 to agents that died mid-run -- it banks whatever verified lines they saved.
 
 Dry-run by default; pass --apply to bank.
@@ -14,6 +17,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import swarm as S
 import nearmiss_db as NM
 import ledger as L
+import reloc_audit as RA
 
 
 def main():
@@ -22,6 +26,8 @@ def main():
     ap.add_argument("--apply", action="store_true", help="bank the verified matches")
     ap.add_argument("--dry-run", action="store_true",
                     help="no-op; dry-run is the default (kept for compatibility)")
+    ap.add_argument("--no-strict", action="store_true",
+                    help="skip the reloc-destination gate (bytes-only banking)")
     args = ap.parse_args()
     do_apply = args.apply and not args.dry_run
 
@@ -51,11 +57,19 @@ def main():
         if L.make_key(module, addr) in done:
             dup += 1; continue
         try:
-            ok = S.oracle_ok(src, name, bytes.fromhex(thex))
+            ok, obj = S.oracle_check(src, name, bytes.fromhex(thex))
         except Exception as e:
             rejected.append((name, f"exc {e}")); continue
         if not ok:
             rejected.append((name, "oracle FALSE")); continue
+        if not args.no_strict:
+            # the byte oracle wildcards reloc slots; refuse a candidate whose
+            # relocations point somewhere other than config/**/relocs.txt records
+            bad = RA.gate_wrong_dests(obj, name, L.norm_addr(addr), size, module)
+            if bad:
+                rejected.append((name, f"WRONG-DEST reloc: {bad[0]['cand']} "
+                                       f"({bad[0]['cand_addr']}) != config {bad[0]['cfg']}"))
+                continue
         if do_apply:
             status = L.bank({"addr": addr, "name": name, "size": size,
                              "module": module, "versions": ["harvest"]}, src)

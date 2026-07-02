@@ -258,6 +258,17 @@ def bank_matches(args):
     banked, banked_keys, rescored = 0, [], {}
     for key, r in list(db.items()):
         div, ok = evaluate(r["c_source"], r["name"], bytes.fromhex(r["target_hex"]))
+        if ok and not getattr(args, "no_strict", False):
+            # the byte oracle wildcards reloc slots; refuse a draft whose relocations
+            # point somewhere other than the config/**/relocs.txt records
+            import reloc_audit as RA
+            _, obj = S.oracle_check(r["c_source"], r["name"], bytes.fromhex(r["target_hex"]))
+            bad = (RA.gate_wrong_dests(obj, r["name"], L.norm_addr(r["addr"]),
+                                       r["size"], r["module"]) if obj else None)
+            if bad:
+                print(f"  SKIP {r['name']}: bytes match but {len(bad)} reloc "
+                      f"destination(s) WRONG (e.g. {bad[0]['cand']} != {bad[0]['cfg']})")
+                continue
         if ok:
             st = L.bank({"addr": r["addr"], "name": r["name"], "size": r["size"],
                          "module": r["module"], "versions": ["nearmiss-db"]},
@@ -293,7 +304,10 @@ def main():
                    help="comma list of category substrings to keep (e.g. "
                         "'register allocation,instruction reorder' for permuter seeds)")
     p.set_defaults(fn=export_close)
-    p = sub.add_parser("bank-matches"); p.set_defaults(fn=bank_matches)
+    p = sub.add_parser("bank-matches")
+    p.add_argument("--no-strict", action="store_true",
+                   help="skip the reloc-destination gate (bytes-only banking)")
+    p.set_defaults(fn=bank_matches)
     args = ap.parse_args()
     args.fn(args)
 
