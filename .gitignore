@@ -62,3 +62,7 @@ tools/claims_handle.txt
 
 # coddog fan-out scratch (agents write candidates here)
 _abwork/
+
+# AI-session draft area (Cursor/Grok and friends): unverified candidates live
+# here, never in src/ - src/ is oracle-verified matches only
+/scratch/
