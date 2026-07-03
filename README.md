@@ -32,7 +32,12 @@ source is known to be correct.
 This repo contains only original work: the tooling, the hand-written C, and the notes.
 It contains no ROM and no extracted Nintendo assets. Those are read locally from a
 cartridge dump you own, and they are git-ignored. Do not commit anything derived from
-the ROM's data or assets.
+the ROM's data or assets, with one deliberate, documented exception: the coordination
+data on the `chaos-data` branch includes annotated disassembly text of still-unmatched
+functions, so contributors can pick up work without a full local setup. This is the
+same practice as decomp projects committing `.s` files for unmatched code. It is text,
+not bytes or assets, and each function's disassembly leaves the published data as soon
+as it is matched.
 
 ## Notes on the numbers
 
