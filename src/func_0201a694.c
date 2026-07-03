@@ -5,6 +5,7 @@ extern void func_0201a798(int id);
 extern int func_0203d7b8(void);
 extern int GetSceneOverlayID(int id);
 extern void func_0201a754(int id);
+extern int overlay_75;
 
 int func_0201a694(int id)
 {
@@ -12,7 +13,7 @@ int func_0201a694(int id)
     int old;
 
     if ((id == 6) && (data_0209d4e0 == 0)) {
-        func_0201a798(0x4b);
+        func_0201a798((int)&overlay_75);
         if (func_0203d7b8()) {
             return 3;
         }
