@@ -1,14 +1,10 @@
-int func_ov034_02112650(int arg0, char *lhsObj, char *rhsObj)
+int func_ov034_02112650(int a, int *b, int *c)
 {
-    volatile char scratch[0x10];
-    int rhs;
-    int lhs = *(int *)(lhsObj + 0x10);
-
-    (void)scratch;
-    arg0 = *(int *)(rhsObj + 0xa8);
-    rhs = arg0;
-
-    if (rhs < 0 && lhs < 0 && lhs > rhs)
+    volatile int pad[4];
+    int y = b[0x10 / 4];
+    int x = c[0xa8 / 4];
+    (void)&pad;
+    if (x < 0 && y < 0 && y > x)
         return 1;
     return 0;
 }
