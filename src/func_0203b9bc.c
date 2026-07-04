@@ -1,0 +1,52 @@
+// NONMATCHING: different op / idiom (div=51). Logic verified correct vs ROM; not
+// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
+// Counts as decompiled, not matched.
+typedef unsigned short u16;
+
+struct Col { u16 a, b, c, d; };
+
+extern struct Col data_020a0df8[];
+extern struct Col data_020a0dd8;
+
+extern int func_0205edc8(void);
+extern void func_0205ea28(struct Col *dst, struct Col *src);
+
+void func_0203b9bc(struct Col *out)
+{
+    struct Col tmp[4];
+    int i;
+    int idx;
+    int flag;
+
+    idx = func_0205edc8();
+    flag = 0;
+    for (i = 0; i < 4; i++) {
+        int k = idx - 4 + i;
+        if (k < 0) k += 9;
+        if (data_020a0df8[k].c != 0) flag = 1;
+        if (data_020a0df8[k].d != 0) {
+            tmp[i].c = 0;
+        } else {
+            tmp[i].a = data_020a0df8[k].a;
+            tmp[i].b = data_020a0df8[k].b;
+            tmp[i].c = data_020a0df8[k].c;
+            tmp[i].d = data_020a0df8[k].d;
+        }
+    }
+
+    if (tmp[3].c != 0 && tmp[2].c != 0 && tmp[1].c != 0) {
+        func_0205ea28(&data_020a0dd8, &tmp[2]);
+    } else if (tmp[0].c != 0 && tmp[1].c != 0 && tmp[2].c != 0) {
+        func_0205ea28(&data_020a0dd8, &tmp[1]);
+    } else if (flag == 0) {
+        data_020a0dd8.c = 0;
+        data_020a0dd8.a = 0xff;
+        data_020a0dd8.b = 0xff;
+        data_020a0dd8.d = 0;
+    }
+
+    out->a = data_020a0dd8.a;
+    out->b = data_020a0dd8.b;
+    out->c = data_020a0dd8.c;
+    out->d = data_020a0dd8.d;
+}

@@ -1,0 +1,42 @@
+// NONMATCHING: different op / idiom (div=19). Logic verified correct vs ROM; not
+// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
+// Counts as decompiled, not matched.
+struct V3 { int x, y, z; };
+extern char* _ZN5Actor10FindWithIDEj(unsigned int id);
+extern short Vec3_HorzAngle(const struct V3* v0, const struct V3* v1);
+extern int Vec3_HorzDist(const struct V3* a, const struct V3* b);
+extern short data_02082214[];
+void func_ov010_0211184c(char* c, char* arg2) {
+    char* target;
+    struct V3 va, vt;
+    struct V3 *sa, *st;
+    short ang;
+    short ang2;
+    int dist;
+    int idx;
+    short tv;
+    int d;
+    int b;
+    if (*(int*)(c+0x3a0) != 0) return;
+    if (*(short*)(c+0x90) < -0x3000) return;
+    if (*(int*)(c+0x3ac) == 0) return;
+    target = _ZN5Actor10FindWithIDEj(*(unsigned int*)(c+0x3ac));
+    if (target == 0) return;
+    b = (int)(*(unsigned short*)(arg2+0xc) == 0xbf);
+    if (b == 0) return;
+    sa = (struct V3*)(arg2+0x5c);
+    st = (struct V3*)(target+0x5c);
+    va.x = sa->x;
+    va.y = sa->y;
+    va.z = sa->z;
+    vt.x = st->x;
+    vt.y = st->y;
+    vt.z = st->z;
+    ang = Vec3_HorzAngle(&vt, &va);
+    ang2 = (short)(ang + *(short*)(target+0x8e));
+    dist = Vec3_HorzDist(&vt, &va);
+    idx = (unsigned short)ang2 >> 4;
+    tv = data_02082214[idx*2];
+    d = (int)(((long long)dist * tv + 0x800) >> 12);
+    if (d < 0x10e000) *(unsigned char*)(target+0x3aa) = 1;
+}
