@@ -227,17 +227,30 @@ def bank(record, src_text):
                     except Exception:
                         pass
                     break
-            if parked_owner != k:
+            # A committed "// NONMATCHING" hatch (e.g. PR #84's draft bank) is
+            # also sanctioned: the banner proves it is a hatch even though the
+            # local gitignored nonmatching.jsonl never saw it.
+            all_hatches = all(
+                "NONMATCHING" in p.read_text(encoding="utf-8",
+                                             errors="replace")[:200]
+                for p in existing)
+            if parked_owner != k and not all_hatches:
                 print(f"ledger: REFUSED to bank {name} at {k}: "
                       f"{existing[0].name} exists and is not a hatch parked for "
                       f"this (module, addr)", file=sys.stderr)
                 return "refused"
             stale = [p for p in existing if p.suffix != "." + ext]
             if stale:
-                print(f"ledger: REFUSED to bank {name} at {k}: existing "
-                      f"{stale[0].name} has a different extension than the new "
-                      f".{ext}; resolve by hand", file=sys.stderr)
-                return "refused"
+                if all_hatches:
+                    # verified match upgrades the hatch; drop the odd-extension
+                    # twin so it cannot shadow the new file in progress counts
+                    for p in stale:
+                        p.unlink()
+                else:
+                    print(f"ledger: REFUSED to bank {name} at {k}: existing "
+                          f"{stale[0].name} has a different extension than the "
+                          f"new .{ext}; resolve by hand", file=sys.stderr)
+                    return "refused"
 
         (SRC / f"{name}.{ext}").write_text(body, encoding="utf-8")
         _append_line(MATCHED, rec)
