@@ -125,6 +125,8 @@ def chat(messages, max_tokens=8000, retries=4):
             return text, u.get("input_tokens", 0), u.get("output_tokens", 0)
         if r.status_code in (429, 500, 502, 503, 529):
             time.sleep(delay); delay = min(delay * 2, 120); continue
+        if r.status_code == 402 or "insufficient" in r.text.lower():
+            raise RuntimeError("BALANCE_EXHAUSTED")
         raise RuntimeError(f"GLM API {r.status_code}: {r.text[:300]}")
     raise RuntimeError("GLM API: retries exhausted")
 
@@ -280,6 +282,9 @@ def main():
                 except Exception:
                     pass  # claim TTL expires on its own; do not sink the sweep
         _write_output(args.out, results, tin, tout)   # partial results survive a crash
+        if any("BALANCE_EXHAUSTED" in (r.get("note") or "") for r in results):
+            log("API balance exhausted - stopping the sweep (partial output written)")
+            break
 
     landed = [r for r in results if r["matched"]]
     mins = (time.time() - t0) / 60
