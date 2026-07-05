@@ -1,6 +1,3 @@
-// NONMATCHING: different op / idiom (div=51). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 typedef int Fix12;
 extern int _ZNK7PathPtr5LoopsEv(void *p);
 extern int _ZNK7PathPtr8NumNodesEv(void *p);
@@ -33,27 +30,31 @@ int func_ov052_0211154c(char *c)
     _ZNK7PathPtr7GetNodeER7Vector3j(c + 0x320, &prev, *(int *)(c + 0x328));
     Vec3_Sub(&diff, c + 0x5c, &prev);
     len = LenVec3(&diff);
-    if (len != 0) {
-        if (len <= *(int *)(c + 0x98)) {
-            int q = _ZN4cstd4fdivEii(*(int *)(c + 0x98), len);
-            Vec3_MulScalar(&scaled1, &diff, q); SubVec3(c + 0x5c, &scaled1, c + 0x5c); looped = 1;
-        } else {
-            int q = _ZN4cstd4fdivEii(*(int *)(c + 0x98), len);
-            Vec3_MulScalar(&scaled2, &diff, q); SubVec3(c + 0x5c, &scaled2, c + 0x5c);
-        }
+    if (len == 0 || len <= *(int *)(c + 0x98)) {
+        Vec3_MulScalar(&scaled1, &diff, _ZN4cstd4fdivEii(*(int *)(c + 0x98), len));
+        SubVec3(c + 0x5c, &scaled1, c + 0x5c);
+        looped = 1;
+    } else {
+        Vec3_MulScalar(&scaled2, &diff, _ZN4cstd4fdivEii(*(int *)(c + 0x98), len));
+        SubVec3(c + 0x5c, &scaled2, c + 0x5c);
     }
     if (looped) {
-        *(int *)(c + 0x328) += *(int *)(c + 0x32c);
+        *(int *)(((int)c + 0x328) & 0xFFFFFFFFFFFFFFFF) += *(int *)(c + 0x32c);
         if (*(int *)(c + 0x328) < 0) {
-            if (_ZNK7PathPtr5LoopsEv(c + 0x320)) *(int *)(c + 0x328) = _ZNK7PathPtr8NumNodesEv(c + 0x320) - 1;
-            else { *(int *)(c + 0x32c) = 1; *(int *)(c + 0x328) += *(int *)(c + 0x32c) * 2; }
+            if (_ZNK7PathPtr5LoopsEv(c + 0x320)) {
+                *(int *)(c + 0x328) = _ZNK7PathPtr8NumNodesEv(c + 0x320) - 1;
+            } else {
+                *(int *)(c + 0x32c) = 1;
+                *(int *)(((unsigned)c + 0x328) & 0xFFFFFFFFFFFFFFFF) += *(int *)(c + 0x32c) * 2;
+            }
         }
-    } else {
-        *(int *)(c + 0x32c) = 1;
-        *(int *)(c + 0x328) += *(int *)(c + 0x32c) * 2;
         if (*(int *)(c + 0x328) >= _ZNK7PathPtr8NumNodesEv(c + 0x320)) {
-            if (_ZNK7PathPtr5LoopsEv(c + 0x320)) *(int *)(c + 0x328) = 0;
-            else { *(int *)(c + 0x32c) = -1; *(int *)(c + 0x328) += *(int *)(c + 0x32c) * 2; }
+            if (_ZNK7PathPtr5LoopsEv(c + 0x320)) {
+                *(int *)(c + 0x328) = 0;
+            } else {
+                *(int *)(c + 0x32c) = -1;
+                *(int *)(((long long)(int)(c + 0x328)) & 0xFFFFFFFFFFFFFFFFLL) += *(int *)(c + 0x32c) * 2;
+            }
         }
     }
     _ZN8Platform21UpdateModelPosAndRotYEv(c);

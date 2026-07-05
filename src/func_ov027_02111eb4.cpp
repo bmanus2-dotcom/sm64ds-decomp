@@ -1,7 +1,4 @@
 //cpp
-// NONMATCHING: different op / idiom (div=9). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 extern "C" {
 extern void *_ZN5Model8LoadFileER13SharedFilePtr(void *fp);
 extern void _ZN9ModelBase7SetFileEP8BMD_Fileii(void *o, void *f, int a, int b);
@@ -29,7 +26,7 @@ extern void _ZN16MeshColliderBase16UpdatePosAndAngsERS_P5ActorR10ClsnResultR7Vec
 
 struct RG { char pad[0x54]; };
 
-void func_ov027_02111eb4(void *cc)
+int func_ov027_02111eb4(void *cc)
 {
     char *c = (char*)cc;
     int i;
@@ -67,8 +64,8 @@ void func_ov027_02111eb4(void *cc)
 
     v[0] = *(int*)(c + 0x5c);
     v[1] = *(int*)(c + 0x60);
-    v[1] = *(int*)(c + 0x60) + 0x14000;
     v[2] = *(int*)(c + 0x64);
+    v[1] = v[1] + 0x14000;
     _ZN13RaycastGroundC1Ev(&rg);
     _ZN13RaycastGround12SetObjAndPosERK7Vector3P5Actor(&rg, v, 0);
     if (_ZN13RaycastGround10DetectClsnEv(&rg))
@@ -79,5 +76,6 @@ void func_ov027_02111eb4(void *cc)
     *(int*)(c + 0x84) = 0x1000;
     *(int*)(c + 0x88) = 0x1000;
     _ZN13RaycastGroundD1Ev(&rg);
+    return 1;
 }
 }

@@ -1,6 +1,3 @@
-// NONMATCHING: missing logic (ROM does more) (div=2). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 
 struct Vec3
 {
@@ -14,11 +11,9 @@ extern int Vec3_HorzDist(struct Vec3 *a, struct Vec3 *b);
 int func_ov026_02111cb4(char *c)
 {
   char *p = Actor_ClosestPlayer(c);
-  char *new_var;
-  new_var = p + 0x5c;
   if (p)
   {
-    struct Vec3 *sp = (struct Vec3 *) new_var;
+    struct Vec3 *sp = (struct Vec3 *) (((int) p + 0x5c) & 0xFFFFFFFFFFFFFFFF);
     struct Vec3 t;
     t.x = sp->x;
     t.y = sp->y;

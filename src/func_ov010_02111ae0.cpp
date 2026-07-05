@@ -1,7 +1,4 @@
 //cpp
-// NONMATCHING: different op / idiom (div=9). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 typedef int s32;
 typedef short s16;
 typedef unsigned int u32;
@@ -90,10 +87,8 @@ extern "C" int func_ov010_02111ae0(Obj* thiz)
             if (o) {
                 int b = (int)(*(u16*)((char*)o + 0xc) == 0xbf);
                 if (b) {
-                    int* op = (int*)((char*)o + 0x5c);
-                    hv.x = op[0];
-                    hv.y = op[1];
-                    hv.z = op[2];
+                    Vector3* op = (Vector3*)(((int)o + 0x5c) & 0xFFFFFFFFFFFFFFFFull);
+                    hv = *op;
                     if (AngleDiff(Vec3_HorzAngle(&thiz->pos, &hv), thiz->angle_8e) < 0x4000) {
                         if (*(s32*)((char*)o + 0x664) == 0xd) {
                             if (_ZN6Player9StartTalkER9ActorBaseb(o, thiz, 0)) {
