@@ -1,7 +1,4 @@
 //cpp
-// NONMATCHING: base materialization / addressing (div=25). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 struct Vector3 { int x, y, z; };
 
 extern "C" {
@@ -32,10 +29,12 @@ extern "C" int func_ov065_02117404(unsigned char* thiz)
     if (*(unsigned short*)(thiz + 0x100) < 0x14) *(unsigned short*)(thiz + 0x100) = 0x14;
 skip:
     if (dist < 0x1f4000 && (*(int*)(thiz + 0xb0) & 8) != 0) {
-        *(int*)(thiz + 0x430) = *(int*)(thiz + 0x430) + 1;
+        int* ip1 = (int*)(((int)thiz + 0x430) & 0xFFFFFFFFFFFFFFFFULL);
+        *ip1 = *ip1 + 1;
         if (*(int*)(thiz + 0x430) > 0x64) {
             *(int*)(thiz + 0x430) = 0;
-            *(int*)(thiz + 0xb0) = *(int*)(thiz + 0xb0) | 1;
+            int* ip2 = (int*)(((int)thiz + 0xb0) & 0xFFFFFFFFFFFFFFFFULL);
+            *ip2 = *ip2 | 1;
             *(short*)(thiz + 0x92) = (short)-0x8000;
             *(short*)(thiz + 0x8c) = *(short*)(thiz + 0x92);
             *(int*)(thiz + 0x5c) = *(int*)(thiz + 0x424);

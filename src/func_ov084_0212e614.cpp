@@ -1,7 +1,4 @@
 //cpp
-// NONMATCHING: register allocation (div=16). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 extern "C" {
 extern void _ZN5Actor19MakeVanishLuigiWorkER12CylinderClsn(char *thiz, char *clsn);
 extern int func_ov084_0212d564(char *);
@@ -38,14 +35,17 @@ extern "C" int func_ov084_0212e614(char *c)
         break;
     case 3:
         func_ov084_0212dc30(c);
-        *(unsigned short *)(c + 0x100) = *(unsigned short *)(c + 0x100) + 1;
-        if (s != *(int *)(c + 0x1ec))
-            *(unsigned short *)(c + 0x100) = 0;
-        func_ov084_0212d86c(c);
         break;
     case 4:
         break;
     }
+    {
+        char * p = c + 0x100;
+        *(unsigned short *)p = *(unsigned short *)p + 1;
+        if (s != *(int *)(c + 0x1ec))
+            *(unsigned short *)p = 0;
+    }
+    func_ov084_0212d86c(c);
     func_ov084_0212d564(c);
     _ZN12CylinderClsn5ClearEv(c + 0x174);
     *(int *)(c + 0x178) = *(int *)(c + 0x204) * *(int *)(c + 0x208);
@@ -53,11 +53,11 @@ extern "C" int func_ov084_0212e614(char *c)
     _ZN12CylinderClsn6UpdateEv(c + 0x174);
     _ZN12CylinderClsn5ClearEv(c + 0x1a8);
     int b2 = *(unsigned short *)(c + 0xc) == 0xfc;
-    if (b2 != 0
+    if (b2 == 0
         && (unsigned int)(*(int *)(c + 0x1ec) - 2) <= 1
         && *(int *)(c + 0x204) == *(int *)(c + 0x210)) {
         _ZN25MovingCylinderClsnWithPos21SetPosRelativeToActorERK7Vector3(c + 0x1a8, c + 0x1f8);
+        _ZN12CylinderClsn6UpdateEv(c + 0x1a8);
     }
-    _ZN12CylinderClsn6UpdateEv(c + 0x1a8);
     return 1;
 }

@@ -1,7 +1,4 @@
 //cpp
-// NONMATCHING: base materialization / addressing (div=15). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 struct Actor;
 typedef int Fix12;
 typedef struct { int x; } C;
@@ -37,9 +34,10 @@ int func_ov066_02118cdc(char* c) {
         } else {
             data_ov066_0211ae0c = data_ov066_0211abe0;
         }
+        volatile int* tmp = (volatile int*)(((int)c + 0x494) & 0xFFFFFFFFFFFFFFFF);
+        *tmp = *tmp + 1;
+        *tmp = *tmp & 1;
     }
-    *(int*)(c + 0x494) += 1;
-    *(int*)(c + 0x494) &= 1;
     return 1;
 }
 }

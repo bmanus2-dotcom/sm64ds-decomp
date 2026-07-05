@@ -1,7 +1,4 @@
 //cpp
-// NONMATCHING: different op / idiom (div=26). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 struct Actor;
 extern "C" Actor *_ZN5Actor10FindWithIDEj(unsigned int id);
 extern "C" void _ZN9ActorBase18MarkForDestructionEv(void *self);
@@ -47,7 +44,7 @@ extern "C" int func_ov063_0211ae40(O *self)
     if (self->f494 != 0) {
         self->f48c = _ZN5Actor10FindWithIDEj(self->f494);
         if (self->f48c != 0) {
-            cnt = (int *)((char *)self->f48c + 0x5a0);
+            cnt = (int *)(((int)self->f48c + 0x5a0) & 0xFFFFFFFFFFFFFFFF);
             (*cnt)++;
         }
         self->f48c = 0;
