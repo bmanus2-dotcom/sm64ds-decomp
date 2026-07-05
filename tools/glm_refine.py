@@ -40,6 +40,11 @@ if not API_KEY:  # fallback: first line of ~/.glm_key (never commit or paste the
 
 _print_lock = threading.Lock()
 
+# reassigned from --workdir before the pool runs, so a claimless mass sweep can
+# write its drafts in a private dir and never clobber a concurrent Fable/DeepSeek
+# batch working the same function name.
+_WORKDIR = ABWORK
+
 
 def log(msg):
     with _print_lock:
@@ -136,7 +141,7 @@ DIV_RE = re.compile(r"NOMATCH divergences=(\d+)")
 
 def verify(name, wl):
     out = run_tool(["tools/abverify.py", "--name", name,
-                    "--src", str(ABWORK / f"{name}.src"), "--wl", wl])
+                    "--src", str(_WORKDIR / f"{name}.src"), "--wl", wl])
     if re.search(r"^MATCH\s*$", out, re.MULTILINE):
         return 0, out
     m = DIV_RE.search(out)
@@ -148,8 +153,8 @@ def crack_one(name, wl, attempts, row):
     try:
         ctx = run_tool(["tools/abrow.py", "--name", name, "--wl", wl])
         draft = row.get("draft") or ""
-        ABWORK.mkdir(exist_ok=True)
-        (ABWORK / f"{name}.src").write_text(draft, encoding="utf-8", newline="\n")
+        _WORKDIR.mkdir(exist_ok=True, parents=True)
+        (_WORKDIR / f"{name}.src").write_text(draft, encoding="utf-8", newline="\n")
         best_div, vout = verify(name, wl)
         best_src = draft
         if best_div == 0:
@@ -172,7 +177,7 @@ def crack_one(name, wl, attempts, row):
                                  "No code block found. Reply with the complete source file "
                                  "in one fenced block plus the JSON line."})
                 continue
-            (ABWORK / f"{name}.src").write_text(src, encoding="utf-8", newline="\n")
+            (_WORKDIR / f"{name}.src").write_text(src, encoding="utf-8", newline="\n")
             div, vout = verify(name, wl)
             log(f"  [{name}] attempt {att}: div={div} (best {best_div})")
             if div < best_div:
@@ -188,7 +193,7 @@ def crack_one(name, wl, attempts, row):
             messages.append({"role": "user", "content":
                              f"Still NOMATCH, divergences={div}. Verifier output:\n{vout}\n\n"
                              f"Best so far is {best_div}. Try a different lever."})
-        (ABWORK / f"{name}.src").write_text(best_src, encoding="utf-8", newline="\n")
+        (_WORKDIR / f"{name}.src").write_text(best_src, encoding="utf-8", newline="\n")
         return {"name": name, "matched": False, "c_source": best_src,
                 "attempts": attempts, "divergences": best_div,
                 "note": note or "no improvement"}, t_in, t_out
@@ -208,9 +213,23 @@ def main():
     ap.add_argument("--chunk", type=int, default=25,
                     help="claim-lock and work this many functions at a time, so a "
                          "mass sweep never hogs the pool from other tiers/contributors")
+    ap.add_argument("--no-claims", action="store_true",
+                    help="do NOT claim-lock; attempt every row even if held elsewhere. "
+                         "Use for a huge cheap sweep where holding claims would block "
+                         "other contributors; duplicate work is dedup-skipped at land.")
+    ap.add_argument("--workdir", default=None,
+                    help="private dir for _abwork drafts (default _abwork). Set a "
+                         "distinct dir for a claimless sweep so it cannot clobber a "
+                         "concurrent batch working the same function name.")
     ap.add_argument("--dry-run", action="store_true",
                     help="build one prompt, print sizes, no API call")
     args = ap.parse_args()
+
+    global _WORKDIR
+    if args.workdir:
+        _WORKDIR = pathlib.Path(args.workdir)
+        if not _WORKDIR.is_absolute():
+            _WORKDIR = REPO / args.workdir
 
     rows = [json.loads(l) for l in
             pathlib.Path(args.wl).read_text(encoding="utf-8").splitlines() if l.strip()]
@@ -227,8 +246,10 @@ def main():
     if not API_KEY:
         sys.exit("set GLM_API_KEY (coding-plan key from z.ai)")
 
-    sys.path.insert(0, str(REPO / "tools"))
-    import claims  # belongto.us lock service; per-chunk try-lock/release
+    claims = None
+    if not args.no_claims:
+        sys.path.insert(0, str(REPO / "tools"))
+        import claims  # belongto.us lock service; per-chunk try-lock/release
 
     def addr_int(r):
         a = r["addr"]
@@ -242,27 +263,30 @@ def main():
     results, tin, tout, skipped = [], 0, 0, 0
     for c0 in range(0, len(rows), args.chunk):
         chunk = rows[c0:c0 + args.chunk]
-        locked = []           # (row, claim_id)
-        for r in chunk:
-            try:
-                a, sz = addr_int(r), size_int(r)
-                st, res = claims.try_lock(r["module"], f"0x{a:08x}", f"0x{a + sz:08x}",
-                                          note=f"glm-5.2 sweep: {r['name'][:60]}")
-                if st is None:
-                    sys.exit(f"claims service unreachable ({res.get('error')}) - "
-                             f"refusing to run unlocked; fix and rerun")
-                if st == 401:
-                    sys.exit("claims key expired/invalid (401) - refusing to run "
-                             "unlocked; refresh tools/claims_key.txt and rerun")
-                cid = claims._claim_id(res)
-                if cid is None:
-                    skipped += 1   # conflict: someone else holds it - skip
-                    continue
-                locked.append((r, cid))
-            except SystemExit:
-                raise
-            except Exception as e:
-                sys.exit(f"claims lock failed ({e}) - refusing to run unlocked")
+        locked = []           # (row, claim_id or None)
+        if args.no_claims:
+            locked = [(r, None) for r in chunk]   # attempt everything, lock nothing
+        else:
+            for r in chunk:
+                try:
+                    a, sz = addr_int(r), size_int(r)
+                    st, res = claims.try_lock(r["module"], f"0x{a:08x}", f"0x{a + sz:08x}",
+                                              note=f"glm-5.2 sweep: {r['name'][:60]}")
+                    if st is None:
+                        sys.exit(f"claims service unreachable ({res.get('error')}) - "
+                                 f"refusing to run unlocked; fix and rerun")
+                    if st == 401:
+                        sys.exit("claims key expired/invalid (401) - refusing to run "
+                                 "unlocked; refresh tools/claims_key.txt and rerun")
+                    cid = claims._claim_id(res)
+                    if cid is None:
+                        skipped += 1   # conflict: someone else holds it - skip
+                        continue
+                    locked.append((r, cid))
+                except SystemExit:
+                    raise
+                except Exception as e:
+                    sys.exit(f"claims lock failed ({e}) - refusing to run unlocked")
         if not locked:
             continue
         try:
@@ -276,11 +300,14 @@ def main():
                     log(f"[{len(results)}/{len(rows)}] {res['name']}: "
                         f"{'MATCH' if res['matched'] else 'div=' + str(res['divergences'])}")
         finally:
-            for _, cid in locked:
-                try:
-                    claims.release(cid)
-                except Exception:
-                    pass  # claim TTL expires on its own; do not sink the sweep
+            if claims is not None:
+                for _, cid in locked:
+                    if cid is None:
+                        continue
+                    try:
+                        claims.release(cid)
+                    except Exception:
+                        pass  # claim TTL expires on its own; do not sink the sweep
         _write_output(args.out, results, tin, tout)   # partial results survive a crash
         if any("BALANCE_EXHAUSTED" in (r.get("note") or "") for r in results):
             log("API balance exhausted - stopping the sweep (partial output written)")
