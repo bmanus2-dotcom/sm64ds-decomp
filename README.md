@@ -1,13 +1,21 @@
 # sm64ds-decomp
 
+[![Discord Server][discord-badge]][discord]
+
+[discord]: https://discord.gg/JXckvdARc
+[discord-badge]: https://img.shields.io/discord/1520811338568569112?color=7289DA&logo=discord&logoColor=ffffff
+
 A from-scratch effort to decompile **Super Mario 64 DS** into matching C.
+
+New here? Start with **[CONTRIBUTING.md](CONTRIBUTING.md)**, coordinate work in
+**[CLAIMS.md](CLAIMS.md)**, and if you review or merge PRs read **[MERGE.md](MERGE.md)**.
 
 ## Progress
 
 <!-- progress:start -->
 ```
-Functions  ███████████████████████░░░░░░░  75.9%   8,644 / 11,390
-Code size  ███████████████░░░░░░░░░░░░░░░  50.6%   1,131,372 / 2,234,028 bytes
+Functions  ███████████████████████░░░░░░░  76.2%   8,684 / 11,390
+Code size  ████████████████░░░░░░░░░░░░░░  51.8%   1,156,656 / 2,234,028 bytes
 ```
 <!-- progress:end -->
 
