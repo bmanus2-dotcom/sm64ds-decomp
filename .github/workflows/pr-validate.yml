@@ -1,0 +1,100 @@
+name: PR link validation
+
+# Uses pull_request_target so repo secrets (the relay token) are available even
+# for fork PRs. SAFE because this workflow never checks out or runs PR code — it
+# only sends the PR number + head sha to the relay. The actual compile/linkcheck
+# happens on the self-hosted worker behind the maintainer's NAT, sandboxed there.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+
+concurrency:
+  group: pr-validate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit validation job
+        id: submit
+        env:
+          RELAY: ${{ secrets.PR_VALIDATE_RELAY }}
+          TOKEN: ${{ secrets.PR_VALIDATE_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          resp=$(curl -sS -X POST "$RELAY/api/pr-validate" \
+            -H "X-Api-Key: $TOKEN" -H "Content-Type: application/json" \
+            -d "{\"repo\":\"$REPO\",\"pr\":$PR,\"sha\":\"$SHA\"}")
+          echo "$resp"
+          jobId=$(echo "$resp" | jq -r '.jobId // empty')
+          if [ -z "$jobId" ]; then echo "relay did not return a jobId"; exit 1; fi
+          echo "jobId=$jobId" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for result
+        id: poll
+        env:
+          RELAY: ${{ secrets.PR_VALIDATE_RELAY }}
+          TOKEN: ${{ secrets.PR_VALIDATE_TOKEN }}
+          JOB: ${{ steps.submit.outputs.jobId }}
+        run: |
+          set -euo pipefail
+          status=""
+          for i in $(seq 1 120); do   # up to ~20 min (120 * 10s)
+            r=$(curl -sS "$RELAY/api/pr-validate/$JOB" -H "X-Api-Key: $TOKEN")
+            status=$(echo "$r" | jq -r '.status // empty')
+            case "$status" in
+              Passed|Failed|Error)
+                echo "$r" > result.json
+                break ;;
+            esac
+            sleep 10
+          done
+          if [ ! -f result.json ]; then
+            echo "status=Timeout" >> "$GITHUB_OUTPUT"
+            echo 'summary=Validation timed out — is the build-box worker running?' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          {
+            echo "summary<<EOF"; jq -r '.summary // ""' result.json; echo "EOF"
+            echo "details<<EOF"; jq -r '.details // ""' result.json; echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment result
+        uses: actions/github-script@v7
+        env:
+          STATUS: ${{ steps.poll.outputs.status }}
+          SUMMARY: ${{ steps.poll.outputs.summary }}
+          DETAILS: ${{ steps.poll.outputs.details }}
+        with:
+          script: |
+            const { STATUS, SUMMARY, DETAILS } = process.env;
+            const icon = STATUS === 'Passed' ? '✅'
+                       : STATUS === 'Failed' ? '❌'
+                       : '⚠️';
+            const marker = '<!-- pr-link-validation -->';
+            let body = `${marker}\n### ${icon} PR link validation — ${STATUS}\n\n${SUMMARY || ''}`;
+            if (DETAILS && DETAILS.trim()) {
+              body += `\n\n<details><summary>details</summary>\n\n\`\`\`\n${DETAILS}\n\`\`\`\n</details>`;
+            }
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+      - name: Fail the check if validation failed
+        if: steps.poll.outputs.status == 'Failed'
+        run: |
+          echo "PR link validation failed"; exit 1
