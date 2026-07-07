@@ -1,6 +1,9 @@
 # sm64ds-decomp
 
-[![Discord](https://img.shields.io/badge/Discord-join%20the%20chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/JXckvdARc)
+[![Discord Server][discord-badge]][discord]
+
+[discord]: https://discord.gg/JXckvdARc
+[discord-badge]: https://img.shields.io/discord/1520811338568569112?color=7289DA&logo=discord&logoColor=ffffff
 
 A from-scratch effort to decompile **Super Mario 64 DS** into matching C.
 
