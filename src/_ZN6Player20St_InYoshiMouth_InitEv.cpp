@@ -1,15 +1,22 @@
 //cpp
-// Player::St_InYoshiMouth_Init - call a helper, clear a run of byte flags, set bit 0x2
-// in the u32 at this+0x2ec (laundered base), clear the byte at this+0x713, return 1.
 extern "C" {
-extern int func_ov002_020d62f8_cb(void *, int);
+extern void func_ov002_020bdb50(char *c, int arg);
+
 int _ZN6Player20St_InYoshiMouth_InitEv(char *c)
 {
-    func_ov002_020d62f8_cb(c, 0);
-    *(unsigned char *)(c + 0x6e5) = 0;
-    *(unsigned char *)(c + 0x6e6) = 0;
-    *(unsigned int *)(((long long)(int)(c + 0x2ec)) & 0xFFFFFFFFFFFFFFFFLL) |= 0x2;
-    *(unsigned char *)(c + 0x713) = 0;
+    unsigned int r3;
+    char *slot;
+    unsigned int r1;
+
+    func_ov002_020bdb50(c, 0);
+    r3 = 0;
+    *(unsigned char *)(c + 0x6e5) = (unsigned char)r3;
+    *(unsigned char *)(c + 0x6e6) = (unsigned char)r3;
+    slot = (char *)(((long long)(int)(c + 0x2ec)) & 0xFFFFFFFFFFFFFFFFLL);
+    r1 = *(unsigned int *)slot;
+    r1 |= 2u;
+    *(unsigned int *)slot = r1;
+    *(unsigned char *)(c + 0x713) = (unsigned char)r3;
     return 1;
 }
 }
