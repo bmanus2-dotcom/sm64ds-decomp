@@ -33,6 +33,23 @@ PY = sys.executable
 BASE_URL = os.environ.get("GLM_BASE_URL", "https://api.z.ai/api/anthropic")
 MODEL = os.environ.get("GLM_MODEL", "glm-5.2")
 API_KEY = os.environ.get("GLM_API_KEY", "")
+
+# Reasoning effort, set by the tangOS console per AI box (TANGOS_EFFORT), mapped to the
+# provider's thinking knob in chat(). Empty or "off" = no extended reasoning.
+EFFORT = os.environ.get("TANGOS_EFFORT", "").strip().lower()
+_IS_ANTHROPIC = "anthropic.com" in BASE_URL  # real Claude vs a GLM/other Anthropic-dialect host
+_CLAUDE_BUDGET = {"low": 2048, "medium": 4096, "high": 8192, "xhigh": 16384, "max": 24576}
+
+
+def _thinking_for(max_tokens):
+    """(thinking-param-or-None, effective max_tokens) for the current EFFORT + provider."""
+    if not EFFORT or EFFORT == "off":
+        return None, max_tokens
+    if _IS_ANTHROPIC:
+        budget = _CLAUDE_BUDGET.get(EFFORT, 8192)
+        # Anthropic requires max_tokens > budget_tokens; leave headroom for the actual answer.
+        return {"type": "enabled", "budget_tokens": budget}, max(max_tokens, budget + 8000)
+    return {"type": "enabled"}, max_tokens  # GLM etc.: reasoning is a plain on/off toggle
 if not API_KEY:  # fallback: first line of ~/.glm_key (never commit or paste the key)
     _kf = pathlib.Path.home() / ".glm_key"
     if _kf.is_file():
@@ -118,20 +135,28 @@ def chat(messages, max_tokens=8000, retries=4):
     url = BASE_URL.rstrip("/") + "/v1/messages"
     headers = {"x-api-key": API_KEY, "anthropic-version": "2023-06-01",
                "content-type": "application/json"}
-    body = {"model": MODEL, "max_tokens": max_tokens, "messages": messages}
+    think, mt = _thinking_for(max_tokens)
+    body = {"model": MODEL, "max_tokens": mt, "messages": messages}
+    if think:
+        body["thinking"] = think
+        if _IS_ANTHROPIC:
+            body["temperature"] = 1  # Anthropic requires temperature=1 when thinking is on
     delay = 5
     for i in range(retries):
         r = requests.post(url, headers=headers, json=body, timeout=600)
         if r.status_code == 200:
             data = r.json()
             text = "".join(b.get("text", "") for b in data.get("content", [])
-                           if b.get("type") == "text")
+                           if b.get("type") == "text")  # thinking blocks are ignored
             u = data.get("usage", {})
             return text, u.get("input_tokens", 0), u.get("output_tokens", 0)
         if r.status_code in (429, 500, 502, 503, 529):
             time.sleep(delay); delay = min(delay * 2, 120); continue
         if r.status_code == 402 or "insufficient" in r.text.lower():
             raise RuntimeError("BALANCE_EXHAUSTED")
+        # Model rejected the reasoning param -> drop it and retry without extended thinking.
+        if r.status_code == 400 and "thinking" in body:
+            body.pop("thinking", None); body.pop("temperature", None); continue
         raise RuntimeError(f"GLM API {r.status_code}: {r.text[:300]}")
     raise RuntimeError("GLM API: retries exhausted")
 
