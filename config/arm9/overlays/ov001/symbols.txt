@@ -33,30 +33,30 @@ data_ov001_020ab620 kind:data(any) addr:0x020ab620
 data_ov001_020ab630 kind:data(any) addr:0x020ab630
 data_ov001_020ab640 kind:data(any) addr:0x020ab640
 data_ov001_020ab6b0 kind:data(any) addr:0x020ab6b0
-data_ov001_020ab800 kind:data(any) addr:0x020ab800 ambiguous
-data_ov001_020ab808 kind:data(any) addr:0x020ab808 ambiguous
-data_ov001_020ab820 kind:data(any) addr:0x020ab820 ambiguous
-data_ov001_020ab838 kind:data(any) addr:0x020ab838 ambiguous
-data_ov001_020ab850 kind:data(any) addr:0x020ab850 ambiguous
-data_ov001_020ab858 kind:data(any) addr:0x020ab858 ambiguous
-data_ov001_020ab870 kind:data(any) addr:0x020ab870 ambiguous
-data_ov001_020ab888 kind:data(any) addr:0x020ab888 ambiguous
-data_ov001_020ab8a0 kind:data(any) addr:0x020ab8a0 ambiguous
-data_ov001_020ab8a8 kind:data(any) addr:0x020ab8a8 ambiguous
-data_ov001_020ab8b8 kind:data(any) addr:0x020ab8b8 ambiguous
-data_ov001_020ab8d0 kind:data(any) addr:0x020ab8d0 ambiguous
-data_ov001_020ab8e8 kind:data(any) addr:0x020ab8e8 ambiguous
-data_ov001_020ab8f0 kind:data(any) addr:0x020ab8f0 ambiguous
-data_ov001_020ab908 kind:data(any) addr:0x020ab908 ambiguous
-data_ov001_020ab920 kind:data(any) addr:0x020ab920 ambiguous
+_ZN3OAM13MM_MARIO_ICONE kind:data(any) addr:0x020ab800 ambiguous
+_ZN3OAM19MM_MARIO_W_CAP_ICONE kind:data(any) addr:0x020ab808 ambiguous
+_ZN3OAM19MM_MARIO_L_CAP_ICONE kind:data(any) addr:0x020ab820 ambiguous
+_ZN3OAM20MM_MARIO_NO_CAP_ICONE kind:data(any) addr:0x020ab838 ambiguous
+_ZN3OAM13MM_LUIGI_ICONE kind:data(any) addr:0x020ab850 ambiguous
+_ZN3OAM19MM_LUIGI_W_CAP_ICONE kind:data(any) addr:0x020ab858 ambiguous
+_ZN3OAM19MM_LUIGI_M_CAP_ICONE kind:data(any) addr:0x020ab870 ambiguous
+_ZN3OAM20MM_LUIGI_NO_CAP_ICONE kind:data(any) addr:0x020ab888 ambiguous
+_ZN3OAM13MM_WARIO_ICONE kind:data(any) addr:0x020ab8a0 ambiguous
+_ZN3OAM20MM_WARIO_NO_CAP_ICONE kind:data(any) addr:0x020ab8a8 ambiguous
+_ZN3OAM19MM_WARIO_L_CAP_ICONE kind:data(any) addr:0x020ab8b8 ambiguous
+_ZN3OAM19MM_WARIO_M_CAP_ICONE kind:data(any) addr:0x020ab8d0 ambiguous
+_ZN3OAM13MM_YOSHI_ICONE kind:data(any) addr:0x020ab8e8 ambiguous
+_ZN3OAM19MM_YOSHI_L_CAP_ICONE kind:data(any) addr:0x020ab8f0 ambiguous
+_ZN3OAM19MM_YOSHI_M_CAP_ICONE kind:data(any) addr:0x020ab908 ambiguous
+_ZN3OAM19MM_YOSHI_W_CAP_ICONE kind:data(any) addr:0x020ab920 ambiguous
 data_ov001_020ab938 kind:data(any) addr:0x020ab938 ambiguous
 data_ov001_020ab940 kind:data(any) addr:0x020ab940 ambiguous
-data_ov001_020ab948 kind:data(any) addr:0x020ab948 ambiguous
+_ZN3OAM10LIFE_ICONSE kind:data(any) addr:0x020ab948 ambiguous
 data_ov001_020ab958 kind:data(any) addr:0x020ab958
 data_ov001_020ab968 kind:data(any) addr:0x020ab968
 data_ov001_020ab988 kind:data(any) addr:0x020ab988
 data_ov001_020ab9a8 kind:data(any) addr:0x020ab9a8
-data_ov001_020ab9c8 kind:data(any) addr:0x020ab9c8 ambiguous
+_ZN3OAM5TIMESE kind:data(any) addr:0x020ab9c8 ambiguous
 data_ov001_020ab9d0 kind:data(any) addr:0x020ab9d0
 data_ov001_020ab9d8 kind:data(any) addr:0x020ab9d8
 data_ov001_020ab9e0 kind:data(any) addr:0x020ab9e0
@@ -77,11 +77,11 @@ data_ov001_020aba50 kind:data(any) addr:0x020aba50
 data_ov001_020aba58 kind:data(any) addr:0x020aba58
 data_ov001_020aba60 kind:data(any) addr:0x020aba60
 data_ov001_020aba68 kind:data(any) addr:0x020aba68
-data_ov001_020aba70 kind:data(any) addr:0x020aba70 ambiguous
-data_ov001_020abac0 kind:data(any) addr:0x020abac0 ambiguous
+_ZN3OAM7NUMBERSE kind:data(any) addr:0x020aba70 ambiguous
+_ZN3OAM16SMALL_STAR_EMPTYE kind:data(any) addr:0x020abac0 ambiguous
 data_ov001_020abac8 kind:data(any) addr:0x020abac8 ambiguous
-data_ov001_020abad0 kind:data(any) addr:0x020abad0 ambiguous
-data_ov001_020abad8 kind:data(any) addr:0x020abad8 ambiguous
+_ZN3OAM10POWER_STARE kind:data(any) addr:0x020abad0 ambiguous
+_ZN3OAM4COINE kind:data(any) addr:0x020abad8 ambiguous
 data_ov001_020abae0 kind:data(any) addr:0x020abae0
 data_ov001_020abae8 kind:data(any) addr:0x020abae8
 data_ov001_020abaf0 kind:data(any) addr:0x020abaf0
@@ -108,7 +108,7 @@ data_ov001_020abcd8 kind:data(any) addr:0x020abcd8
 data_ov001_020abd18 kind:data(any) addr:0x020abd18
 data_ov001_020abd78 kind:data(any) addr:0x020abd78 ambiguous
 data_ov001_020abd80 kind:data(any) addr:0x020abd80 ambiguous
-data_ov001_020abd88 kind:data(any) addr:0x020abd88 ambiguous
+_ZN3OAM14BOUNCING_ARROWE kind:data(any) addr:0x020abd88 ambiguous
 data_ov001_020abd98 kind:data(any) addr:0x020abd98 ambiguous
 data_ov001_020abda8 kind:data(any) addr:0x020abda8
 data_ov001_020abdd8 kind:data(any) addr:0x020abdd8
@@ -126,10 +126,10 @@ data_ov001_020acb68 kind:data(any) addr:0x020acb68 ambiguous
 data_ov001_020acb74 kind:data(any) addr:0x020acb74
 data_ov001_020accfc kind:data(any) addr:0x020accfc
 data_ov001_020ace84 kind:data(any) addr:0x020ace84
-data_ov001_020ad04c kind:data(any) addr:0x020ad04c ambiguous
-data_ov001_020ad058 kind:data(any) addr:0x020ad058
-data_ov001_020ad188 kind:data(any) addr:0x020ad188
-data_ov001_020ad2d0 kind:data(any) addr:0x020ad2d0
+_ZN3OAM21CONTROLLER_MODE_TEXTSE kind:data(any) addr:0x020ad04c ambiguous
+_ZN3OAM15TOUCH_MODE_TEXTE kind:data(any) addr:0x020ad058
+_ZN3OAM18STANDARD_MODE_TEXTE kind:data(any) addr:0x020ad188
+_ZN3OAM19DUAL_HAND_MODE_TEXTE kind:data(any) addr:0x020ad2d0
 data_ov001_020ad450 kind:data(any) addr:0x020ad450
 data_ov001_020ad458 kind:data(any) addr:0x020ad458
 data_ov001_020ad470 kind:data(any) addr:0x020ad470
