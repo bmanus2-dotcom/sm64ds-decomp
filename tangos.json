@@ -4,7 +4,7 @@
     "name": "sm64ds-decomp",
     "title": "Super Mario 64 DS",
     "tagline": "matching C from the chaos",
-    "github": "https://github.com/bmanus2-dotcom/sm64ds-decomp",
+    "github": "https://github.com/tangosdev/sm64ds-decomp",
     "language": "C",
     "platform": "nds",
     "compiler": "mwccarm 1.2/sp2p3. Flags (C): -O4,p -enum int -lang c99 -char signed -interworking -proc arm946e -gccext,on -msgstyle gcc",
@@ -41,7 +41,7 @@
   "data": {
     "generate": "{python} tools/chaos_db_ci.py --out {out}",
     "dbPath": "chaos-db.json",
-    "committedDbUrl": "https://raw.githubusercontent.com/bmanus2-dotcom/sm64ds-decomp/chaos-data/chaos-db.json",
+    "committedDbUrl": "https://raw.githubusercontent.com/tangosdev/sm64ds-decomp/chaos-data/chaos-db.json",
     "claimsApi": "https://belongto.us/api/claims"
   },
   "categories": [

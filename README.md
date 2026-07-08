@@ -26,7 +26,7 @@ by module.
 ![Decompilation progress treemap](docs/progress-treemap.svg)
 
 For an interactive version where you can hover any function for its name, address,
-size, and status, see the [progress treemap on GitHub Pages](https://bmanus2-dotcom.github.io/sm64ds-decomp/).
+size, and status, see the [progress treemap on GitHub Pages](https://tangosdev.github.io/sm64ds-decomp/).
 
 ## What "matching" means
 
@@ -112,7 +112,7 @@ matching runs on. Most functions are matched for free by the automatic templates
 harder ones are matched with AI assistance at roughly 5 to 10 cents of usage each. Spread
 across everything matched so far, that works out to about 5 cents per function on average,
 and reaching the current progress has cost on the order of $200 in AI usage. You can
-sponsor at https://github.com/sponsors/bmanus2-dotcom or back the project on Patreon at
+sponsor at https://github.com/sponsors/tangosdev or back the project on Patreon at
 https://www.patreon.com/c/the_tango. This goes toward development and compute only; it
 has nothing to do with Nintendo's ROM or assets.
 
@@ -120,7 +120,7 @@ has nothing to do with Nintendo's ROM or assets.
 it will pull the repo and set you up:
 
 ```
-Clone https://github.com/bmanus2-dotcom/sm64ds-decomp and set up the Super Mario 64 DS
+Clone https://github.com/tangosdev/sm64ds-decomp and set up the Super Mario 64 DS
 matching-decompilation toolchain on my machine. Do these in order:
 1. Read CONTRIBUTING.md and notes/setup-mwccarm.md in the repo.
 2. Install the Python dependencies: ndspy, capstone, pyelftools.

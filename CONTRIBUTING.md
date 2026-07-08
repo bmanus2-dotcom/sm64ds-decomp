@@ -32,7 +32,7 @@ You bring your own copy of the game. Nothing copyrighted lives in this repo.
 ## First-time setup
 
 ```
-git clone https://github.com/bmanus2-dotcom/sm64ds-decomp
+git clone https://github.com/tangosdev/sm64ds-decomp
 cd sm64ds-decomp
 pip install ndspy capstone pyelftools
 

@@ -2,7 +2,7 @@
   "name": "sm64ds-decomp",
   "title": "Chaos Viewer",
   "tagline": "matching C from the chaos",
-  "github": "https://github.com/bmanus2-dotcom/sm64ds-decomp",
+  "github": "https://github.com/tangosdev/sm64ds-decomp",
   "language": "C",
   "compiler": "mwccarm 1.2/sp2p3. Flags (C): -O4,p -enum int -lang c99 -char signed -interworking -proc arm946e -gccext,on -msgstyle gcc",
   "cppNote": "If a name starts with _Z (C++ mangled), write C++ with the FIRST LINE exactly //cpp",
@@ -14,5 +14,5 @@
   "claimsApi": "https://belongto.us/api/claims",
   "claimsAuthUrl": "https://belongto.us/auth/github/start",
   "nearMissNote": "If a function will not fully match after real effort, do not discard your best attempt - it is still valuable. Open a PR anyway with your closest compiling draft as src/<name>.c, headed by one line: // NONMATCHING: <what still differs> (div=N, from the verify output). Near-miss drafts are the highest-yield input to this project's refine tier - most matches now start from someone's stored near-miss, and a close draft is usually finished within a day.",
-  "dataUrl": "https://raw.githubusercontent.com/bmanus2-dotcom/sm64ds-decomp/chaos-data/chaos-db.json"
+  "dataUrl": "https://raw.githubusercontent.com/tangosdev/sm64ds-decomp/chaos-data/chaos-db.json"
 }

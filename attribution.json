@@ -2,9 +2,7 @@
   "note": "Contributor-chart config, read by tools/chaos_db_ci.py. 'aliases' collapse one person's many git identities (email/name vary per machine + per squash) into a single canonical GitHub login. 'overrides' force a specific src file to a login when the git-add author is wrong (e.g. work landed via a maintainer's consolidating PR/squash). Fix names here, never hand-edit contributions.json.",
   "aliases": {
     "alexsobolew7": "ruspecial",
-    "bmanus2": "bmanus2-dotcom",
-    "tango": "bmanus2-dotcom",
-    "brennen": "bmanus2-dotcom",
+    "bmanus2": "tangosdev",
     "leonard.van.der.plaat": "lplaat"
   },
   "overrides": {
