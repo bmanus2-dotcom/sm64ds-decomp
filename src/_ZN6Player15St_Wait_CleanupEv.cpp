@@ -1,0 +1,27 @@
+//cpp
+extern "C" {
+extern unsigned char data_0209f2d8;
+extern void* data_0209f318;
+extern int data_0209caa0[];
+
+int _ZN6Player15St_Wait_CleanupEv(char* c)
+{
+    void* r4 = data_0209f318;
+    (*(unsigned int*)(((int)r4 + 0x154) & 0xFFFFFFFFFFFFFFFF)) &= ~0x2000;
+    *(unsigned char*)(c+0x721) = 0;
+    do {
+        unsigned char v = data_0209f2d8;
+        int b0 = (v == 1);
+        if (b0 == 0) {
+            if ((data_0209caa0[2] & 0x80) != 0) {
+                int b1 = (v == 2);
+                if (b1 == 0) break;
+            }
+            if (*(unsigned char*)(c+0x727) == 0xf) *(unsigned char*)(c+0x743) = 0;
+            *(unsigned char*)(c+0x727) = 0;
+            *(unsigned char*)(c+0x728) = 0;
+        }
+    } while (0);
+    return 1;
+}
+}
