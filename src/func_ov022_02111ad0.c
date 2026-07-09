@@ -1,6 +1,3 @@
-// NONMATCHING: different op / idiom (div=39). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 extern unsigned char DecIfAbove0_Byte(unsigned char* p);
 extern void _ZN5Sound9PlayBank3EjRK7Vector3(unsigned int a, void* v);
 extern void func_ov022_02111a1c(char* t);
@@ -11,7 +8,7 @@ int func_ov022_02111ad0(char* c)
 {
     if (DecIfAbove0_Byte((unsigned char*)c + 0x31e) == 0) {
         if (*(unsigned char*)(c + 0x31f) == 0) {
-            short* p = (short*)(c + 0x96);
+            short* p = (short*)((long long)(int)(c + 0x96) & 0xFFFFFFFFFFFFFFFFLL);
             *p = *p - 0x100;
             if (*(short*)(c + 0x96) <= -0x2000) {
                 *(short*)(c + 0x96) = -0x2000;
@@ -19,7 +16,7 @@ int func_ov022_02111ad0(char* c)
                 *(unsigned char*)(c + 0x31f) = 1;
             }
         } else {
-            short* p = (short*)(c + 0x96);
+            short* p = (short*)((long long)(int)(c + 0x96) & 0xFFFFFFFFFFFFFFFFLL);
             *p = *p + 0x100;
             if (*(short*)(c + 0x96) >= 0) {
                 *(short*)(c + 0x96) = 0;
