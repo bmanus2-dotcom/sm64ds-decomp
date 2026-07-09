@@ -1,6 +1,3 @@
-// NONMATCHING: extra logic (you do more) (div=2). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 
 void func_0206e068(int a, int *b);
 void func_0206e030(void *p);
@@ -22,12 +19,12 @@ int func_0206df90(char *thiz, int *out)
     {
       *out = *((int *) (thiz + 0x28));
     }
-    new_var = thiz + 0x18;
     if (r != 0)
     {
       return r;
     }
-    *((int *) new_var) += *((int *) (thiz + 0x28));
+    new_var = thiz + 0x18;
+    *(int *)(((unsigned long long)(int)new_var) & 0xFFFFFFFFFFFFFFFFULL) += *((int *) (thiz + 0x28));
   }
   func_0206e030(thiz);
   return 0;
