@@ -185,10 +185,29 @@ def land(a):
                         for d in v["diffs"]:
                             print(f"        {d['off']}: {d['sym']} -> {d['target']}")
                 if wrong:
+                    # AUTO-UNBANK: these compiled byte-identical but a relocation points at the WRONG
+                    # symbol, so they are NOT real matches - CI's link-check rejects them, and they
+                    # used to get auto-pushed as bogus "matched" PRs (e.g. the _ZThn80 Animation
+                    # thunks, twice). Remove the src file + the local matched.jsonl row so they never
+                    # reach a commit. The candidate is still in the driver's output if a human wants
+                    # to fix the reloc by hand.
+                    src_dir = pathlib.Path(__file__).resolve().parent.parent / "src"
+                    wrongset = set(wrong)
+                    for nm in wrong:
+                        for ext in ("c", "cpp"):
+                            try:
+                                (src_dir / f"{nm}.{ext}").unlink()
+                            except FileNotFoundError:
+                                pass
+                    try:
+                        kept = [ln for ln in L.MATCHED.read_text(encoding="utf-8").splitlines()
+                                if ln.strip() and json.loads(ln).get("name") not in wrongset]
+                        L.MATCHED.write_text("\n".join(kept) + ("\n" if kept else ""), encoding="utf-8")
+                    except Exception as e:
+                        print(f"    (couldn't drop wrong rows from matched.jsonl: {e})")
                     print('\n'
-                          f"*** LINK GATE: {len(wrong)} WRONG bank(s) this run: "
-                          f"{', '.join(wrong)} -- unbank (remove src/<name>.c[pp] and "
-                          f"the matched.jsonl rows) before committing ***")
+                          f"*** LINK GATE: unbanked {len(wrong)} WRONG bank(s) (reloc -> wrong "
+                          f"symbol): {', '.join(wrong)} - removed from src/ and the ledger ***")
         except Exception as e:
             print(f"link-gate sweep failed ({e}); run tools/linkcheck.py by hand")
     # Optional claims cleanup. Banking already succeeded above, so this must NEVER abort the
