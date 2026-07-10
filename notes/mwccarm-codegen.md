@@ -623,6 +623,27 @@ div on func_ov007_020ca308, paired with `#pragma opt_strength_reduction off` and
 u64-mask laundering for a separate `+0x18` RMW site, Fable, div 79->0 to full MATCH).
 Try the subscript form before parking an index-variable spill as a coloring floor.
 
+## 6k. A hoisted zero-constant can double as an omitted-looking call argument (2026-07-10)
+
+**Symptom:** a 1-2 div near-miss where a plain `mov rX,#0` for a dead-looking store
+(`*(p+OFF) = 0;`) colors to a DIFFERENT register than every source rephrasing produces -
+survives decl-order permutation, statement reorder, everything in the usual coloring
+toolkit.
+
+**Cause:** the SAME constant (0) is also passed as an argument to a call somewhere else
+in the function (e.g. a trailing `bool`/flag parameter). mwccarm's global constant-CSE
+unifies the two zero materializations into one `mov`, and the allocator colors that
+shared `mov` into whichever register the CALL's arg-passing convention pins it to (its
+birth as a call argument dominates, not its birth as the store's source register) - so
+the store silently inherits the call's arg register. Check every OTHER call in the
+function for a literal `0`/matching-constant argument before declaring a stray `mov
+rX,#0` coloring residual unreachable; if found, the residual is CSE, not a floor.
+
+Cracked func_ov002_020b74d0 (div 2 -> 0, Fable, 6 attempts): the case-1 switch arm's
+`_ZN6Player17SetNoControlStateEhih(..., 0)` call shared its literal `0` third-arg
+register with the earlier `*(c+0xc8) = 0` store, forcing `mov r3,#0` instead of `mov
+r0,#0`.
+
 ## 7. Workflow implications
 
 - **Free tiers first, every cycle:** `clone.py --apply` (byte-identical retarget) then
