@@ -1,27 +1,43 @@
-// NONMATCHING: different op / idiom (div=18). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
-extern void* data_ov001_020ad634[];
-extern unsigned char data_ov001_020ad630[];
-extern unsigned char data_ov001_020ad628[];
 extern void func_ov001_020aa6cc(int r0);
 
-void func_ov001_020ab228(char* c, char* a1, int idx, int a3, unsigned char a5){
-    *(unsigned char*)(c+0x18) = (unsigned char)idx;
-    *(int*)(c+4) = (int)a1;
-    *(int*)(c+8) = *(int*)(a1+4);
-    *(unsigned char*)(c+0x19) = (unsigned char)a3;
-    *(int*)(c+0x10) = (int)data_ov001_020ad634[idx];
-    char* prev = (char*)data_ov001_020ad634[idx];
-    if(prev) *(int*)(prev+0xc) = (int)c;
-    data_ov001_020ad634[idx] = c;
-    data_ov001_020ad630[idx]++;
-    if(a3==3) data_ov001_020ad628[idx] |= 8;
-    *(unsigned char*)(c+0x1a) = 0;
-    *(unsigned char*)(c+0x1b) = 0;
-    *(unsigned char*)(c+0x1b) = (*(unsigned char*)(c+0x1b) & ~1) | (a5 & 1);
-    if(a5!=0) return;
-    if(a3!=3) return;
-    func_ov001_020aa6cc(idx);
-    *(int*)(c+0x14) = -1;
+typedef struct SubT SubT;
+struct SubT {
+    int f00;
+    char *f04;
+    int f08;
+    SubT *f0c;
+    SubT *f10;
+    int f14;
+    unsigned char f18;
+    unsigned char f19;
+    unsigned char f1a;
+    unsigned char f1b;
+};
+
+extern SubT *data_ov001_020ad634[];
+extern unsigned char data_ov001_020ad630[];
+extern unsigned char data_ov001_020ad628[];
+
+void func_ov001_020ab228(char *c, char *a1, int idx, int a3, unsigned char a5)
+{
+    SubT *t = (SubT *)c;
+    SubT *prev;
+    unsigned char *p;
+
+    t->f18 = (unsigned char)idx;
+    t->f04 = a1;
+    t->f08 = *(int *)(a1 + 4);
+    t->f19 = (unsigned char)a3;
+    t->f10 = data_ov001_020ad634[idx];
+    prev = *(SubT * volatile *)&data_ov001_020ad634[idx];
+    if (prev) prev->f0c = t;
+    data_ov001_020ad634[idx] = t;
+    data_ov001_020ad630[idx] = (unsigned char)(data_ov001_020ad630[idx] + 1);
+    if (a3 == 3) data_ov001_020ad628[idx] |= 8;
+    t->f1a = 0;
+    t->f1b = 0;
+    p = (unsigned char *)(int)(((long long)(int)((char *)t + 0x1b)) & 0xFFFFFFFFFFFFFFFFLL);
+    *p = (unsigned char)((*p & ~1) | (a5 & 1));
+    if (a5 != 0 || a3 == 3) func_ov001_020aa6cc(idx);
+    t->f14 = -1;
 }
