@@ -39,11 +39,17 @@ API_KEY = os.environ.get("GLM_API_KEY", "")
 EFFORT = os.environ.get("TANGOS_EFFORT", "").strip().lower()
 _IS_ANTHROPIC = "anthropic.com" in BASE_URL  # real Claude vs a GLM/other Anthropic-dialect host
 _CLAUDE_BUDGET = {"low": 2048, "medium": 4096, "high": 8192, "xhigh": 16384, "max": 24576}
+# DeepSeek (and other OpenAI-compatible hosts) speak the OpenAI /chat/completions dialect, not the
+# Anthropic /v1/messages dialect GLM/Claude use. The console sets GLM_DIALECT=openai for those; when
+# unset, infer from the base URL. deepseek-reasoner reasons on its own, so no thinking param is sent.
+_DIALECT = os.environ.get("GLM_DIALECT", "").strip().lower() or (
+    "openai" if "deepseek" in BASE_URL.lower() else "anthropic")
+_IS_OPENAI = _DIALECT == "openai"
 
 
 def _thinking_for(max_tokens):
     """(thinking-param-or-None, effective max_tokens) for the current EFFORT + provider."""
-    if not EFFORT or EFFORT == "off":
+    if not EFFORT or EFFORT == "off" or _IS_OPENAI:
         return None, max_tokens
     if _IS_ANTHROPIC:
         budget = _CLAUDE_BUDGET.get(EFFORT, 8192)
@@ -132,15 +138,26 @@ def extract(reply):
 
 
 def chat(messages, max_tokens=8000, retries=8):
-    url = BASE_URL.rstrip("/") + "/v1/messages"
-    headers = {"x-api-key": API_KEY, "anthropic-version": "2023-06-01",
-               "content-type": "application/json"}
     think, mt = _thinking_for(max_tokens)
-    body = {"model": MODEL, "max_tokens": mt, "messages": messages}
-    if think:
-        body["thinking"] = think
-        if _IS_ANTHROPIC:
-            body["temperature"] = 1  # Anthropic requires temperature=1 when thinking is on
+    if _IS_OPENAI:
+        # OpenAI Chat Completions dialect (DeepSeek): Bearer auth, /chat/completions, choices[].
+        url = BASE_URL.rstrip("/") + "/chat/completions"
+        headers = {"authorization": f"Bearer {API_KEY}", "content-type": "application/json"}
+        # A reasoning model (deepseek-reasoner) spends its hidden reasoning INSIDE max_tokens; at
+        # the default 8000 a hard function's reasoning starves/truncates the code block ("no code
+        # block returned"). Give it real headroom - it only bills what it actually uses.
+        if "reason" in MODEL.lower():
+            mt = max(mt, 24000)
+        body = {"model": MODEL, "max_tokens": mt, "messages": messages}
+    else:
+        url = BASE_URL.rstrip("/") + "/v1/messages"
+        headers = {"x-api-key": API_KEY, "anthropic-version": "2023-06-01",
+                   "content-type": "application/json"}
+        body = {"model": MODEL, "max_tokens": mt, "messages": messages}
+        if think:
+            body["thinking"] = think
+            if _IS_ANTHROPIC:
+                body["temperature"] = 1  # Anthropic requires temperature=1 when thinking is on
     # Rate-limit resilience: with several parallel workers the API 429s a lot. Back off with
     # jitter and honor Retry-After so a throttled request recovers instead of erroring the whole
     # function. Network hiccups are treated the same as a retryable 5xx.
@@ -154,6 +171,11 @@ def chat(messages, max_tokens=8000, retries=8):
             time.sleep(delay + random.uniform(0, 3)); delay = min(delay * 2, 120); continue
         if r.status_code == 200:
             data = r.json()
+            if _IS_OPENAI:
+                msg = (data.get("choices") or [{}])[0].get("message", {}) or {}
+                text = msg.get("content", "") or ""  # reasoner's thinking is in reasoning_content; ignore it
+                u = data.get("usage", {})
+                return text, u.get("prompt_tokens", 0), u.get("completion_tokens", 0)
             text = "".join(b.get("text", "") for b in data.get("content", [])
                            if b.get("type") == "text")  # thinking blocks are ignored
             u = data.get("usage", {})

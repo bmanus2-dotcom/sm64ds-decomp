@@ -174,21 +174,50 @@ def land(a):
                 print('\n'
                       f"link-gate sweep: {len(new_rows)} function(s) banked this run")
                 ni = RA.build_name_index()
-                wrong = []
+                wrong = []  # (record, mod, addr, size) per wrong-dest bank
                 for r in new_rows:
                     mod, addr = L.key_of(r)
                     size = r["size"] if isinstance(r["size"], int) else int(r["size"], 0)
                     v = LC.linkcheck(r["name"], addr, size, mod, ni)
                     print(f"  {v['verdict']:>10}  {mod}  {r['name']}")
                     if v["verdict"] == "WRONG":
-                        wrong.append(r["name"])
+                        wrong.append((r, mod, addr, size))
                         for d in v["diffs"]:
                             print(f"        {d['off']}: {d['sym']} -> {d['target']}")
                 if wrong:
+                    # AUTO-UNBANK + PARK: these compiled byte-identical but a relocation points at the
+                    # WRONG symbol, so they are NOT real matches - CI rejects them, and they used to get
+                    # auto-pushed as bogus "matched" PRs (the _ZThn80 Animation thunks). (1) Remove the
+                    # src file + matched.jsonl row so they never reach a commit; (2) park them in
+                    # nonmatching.jsonl so worklist STOPS re-handing them out every batch - they rank
+                    # first via a matched sibling, so the driver kept wasting attempts faking a MATCH.
+                    # A human can unpark (drop the nonmatching row) and fix the reloc by hand.
+                    names = {r["name"] for r, _m, _a, _s in wrong}
+                    src_dir = pathlib.Path(__file__).resolve().parent.parent / "src"
+                    for nm in names:
+                        for ext in ("c", "cpp"):
+                            try:
+                                (src_dir / f"{nm}.{ext}").unlink()
+                            except FileNotFoundError:
+                                pass
+                    try:
+                        kept = [ln for ln in L.MATCHED.read_text(encoding="utf-8").splitlines()
+                                if ln.strip() and json.loads(ln).get("name") not in names]
+                        L.MATCHED.write_text("\n".join(kept) + ("\n" if kept else ""), encoding="utf-8")
+                    except Exception as e:
+                        print(f"    (couldn't drop wrong rows from matched.jsonl: {e})")
+                    parked = 0
+                    for r, mod, addr, size in wrong:
+                        try:
+                            if L.append_nonmatching({"name": r["name"], "addr": r["addr"], "size": r["size"],
+                                                     "module": mod, "divergences": 0,
+                                                     "reason": "wrong-dest reloc (auto-parked by link gate)"}):
+                                parked += 1
+                        except Exception as e:
+                            print(f"    (couldn't park {r['name']}: {e})")
                     print('\n'
-                          f"*** LINK GATE: {len(wrong)} WRONG bank(s) this run: "
-                          f"{', '.join(wrong)} -- unbank (remove src/<name>.c[pp] and "
-                          f"the matched.jsonl rows) before committing ***")
+                          f"*** LINK GATE: unbanked {len(wrong)} WRONG bank(s) (reloc -> wrong symbol), "
+                          f"parked {parked} so they stop being re-scheduled: {', '.join(sorted(names))} ***")
         except Exception as e:
             print(f"link-gate sweep failed ({e}); run tools/linkcheck.py by hand")
     # Optional claims cleanup. Banking already succeeded above, so this must NEVER abort the

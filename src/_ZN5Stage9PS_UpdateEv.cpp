@@ -1,5 +1,5 @@
 //cpp
-// NONMATCHING: 17/20 switch cases byte-identical (jump-table-anchored region compare, region div=180; global aligned div=756, was 916). KEY UNLOCK: #pragma opt_common_subs off switches mwccarm to EBB-local CSE = the ROM's per-block slot*4 rematerialization (case 8 now BYTE-EXACT incl. language arms; mid-case 47-word pools in cases 1 and 0xa now placed exactly as ROM). Named locals = manual long-lived CSE under the pragma (int idxa = slot*4 for cross-block reuse); inline exprs remat per EBB. Shared reused int temp (tmpv/rel/rely - ONE variable reassigned per range check, m2c shows them as separate rel0/rel1) reproduces the ROM's stale-temp reads (case 0xa bl_toggle entry tests (u8)tmpv NOT relx - ROM reads the stale temp; opt_okback in 0xa is || not &&). Residuals: case 1 (45: dead-cmp-no-branch cell at loop arm A - branch removal keeps and+cmp, every guarded-dead-code spelling either keeps the bhs or DCEs the cmp too; -2 insns), case 0xa (111: pure reg rotation slot r6/tx r3/ty2 r2 vs mine r2/r1/r0, size EXACT), case 0x11 (24: same rotation class, size exact). The two rotations survive decl-order + register-kw permutation and may be coupled to case 1's residual via function-wide allocation.
+// NONMATCHING: size-exact 0x30ac (was 0x30a4, -2 insn). Global reloc-aware div=456 after size unlock. KEY: (void)data_020a0e40 barrier in case-1 left-arrow arm restores exact size; prologue temps (nxt/cur) fix 3 reg words. Case 8 still BYTE-EXACT. Residuals: case1 left-arrow dead-cmp interleave (ROM: cmp#ff; and vx; strbeq; cmp#38 no branch — every nested-if spelling keeps bhs or DCEs and+cmp); case1/0xa/0x11 pure reg rotation (r5/sb/r4 load order, slot r2 vs r1, case0xa r6 vs r2). 17/20 cases size-aligned; jump-table-anchored cases 6,8,9,0xb-0x10,0x12,0x13 byte-identical.
 /* Stage::PS_Update at 0x0202635c (arm9), size 0x30ac (12,460 bytes, 3115 insns)
  * Compiler mwccarm 1.2/sp2p3, flags:
  * -O4,p -enum int -lang c++ -char signed -interworking -proc arm946e -gccext,on -msgstyle gcc
@@ -186,8 +186,12 @@ void Stage::PS_Update()
         return;
     }
 
-    if (data_0209f248 != data_0209f1ec)
-        data_0209f248 = data_0209f1ec;
+    {
+        u8 nxt = data_0209f1ec;
+        u8 cur = data_0209f248;
+        if (cur != nxt)
+            data_0209f248 = nxt;
+    }
 
     switch (data_0209f248) {
     case 0: {
@@ -358,9 +362,11 @@ void Stage::PS_Update()
                     var_r0 = 1;
                 }
                 if ((var_r0 != 0) && ((u32)(vx = DE8P(sl2 * 4)[2]) < 0x38U) && ((u32)DE8P(sl2 * 4)[3] < 0x20U)) {
-                    data_0209f2c8 = (u8)(data_0209f2c8 - 1);
+                    u8 lv = data_0209f2c8;
                     data_0209f238 = 1;
                     var_fp = 1;
+                    data_0209f2c8 = (u8)(lv - 1);
+                    (void)data_020a0e40;
                     if (((u32)vx & 0xffU) < 0x38U) {
                         if (data_0209f2c8 == 0xFF) {
                             data_0209f2c8 = 0xF;

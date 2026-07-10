@@ -240,7 +240,10 @@ def main():
         for name, addr, size in sweep.funcs(mod):
             if args.addr is not None and addr != args.addr:
                 continue
-            if (label, addr) in done or not (args.min <= size <= args.max):
+            # An exact --addr means the caller wants THAT function - a hand-picked drive target -
+            # even if it's already matched or parked as nonmatching. Only apply the done-set
+            # exclusion in list/scheduling mode (no --addr), so batch generation still skips them.
+            if (args.addr is None and (label, addr) in done) or not (args.min <= size <= args.max):
                 continue
             tgt = data[addr - mod["base"]:addr - mod["base"] + size]
             ins = list(S.md.disasm(tgt, 0))
