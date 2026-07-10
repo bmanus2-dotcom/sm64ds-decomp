@@ -45,6 +45,7 @@ it is fair to take over: ping the claimant first.
 | ov089: 02130fb4 (0x02130fb4), 02131df4 (0x02131df4) | lunavyqo | 2026-07-10 | done - verified byte-identical, PR #251 open |
 | ov034: 02112020 (0x02112020), 02112484 (0x02112484) | lunavyqo | 2026-07-10 | done - verified byte-identical, PR #253 open |
 | ov073: 0211f144 (0x0211f144), 0211f494 (0x0211f494), 0211fa74 (0x0211fa74), 0212128c (0x0212128c) | lunavyqo | 2026-07-10 | done - verified byte-identical, PR #256 open |
+| ov073: 0211f2c0 (0x0211f2c0), 02120ed0 (0x02120ed0) | lunavyqo | 2026-07-10 | done - verified byte-identical, PR #260 open |
 | AI-assisted crack sweep: smallest untried funcs (~0x100 band), spread across modules (this batch mostly ov006/ov007) | beansntoast (AI-assisted) | 2026-06-29 | in progress |
 | ov002 __sinit_ov002_021019d0 (0x021019d0, size 0x5470) | Cursor/Grok | 2026-07-02 | done |
 | ov001 func_ov001_020ab550 (0x020ab550, size 0x60) | Cursor/Grok | 2026-07-02 | done |
