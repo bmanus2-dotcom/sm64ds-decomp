@@ -1,6 +1,8 @@
-/* Scene::~Scene (deleting / D0) at 0x0202e170
+/* _ZN9BootSceneD0Ev (deleting / D0) at 0x020235d4
  *
- * vtable chain Scene -> ActorDerived:
+ * This is the BootScene flavor of the Scene deleting dtor; vtable chain
+ * (from the literal pool) is BootScene -> Scene -> ActorDerived:
+ *   0x02091528 = data_02091528
  *   0x02092680 = data_02092680
  *   0x0208e4b8 = data_0208e4b8
  *   bl 0x02043d48 = ActorBase::~ActorBase
@@ -11,6 +13,7 @@
 struct Scene { void **vtable; /* 0x0 */ };
 struct Heap;
 
+extern void *data_02091528[];
 extern void *data_02092680[];
 extern void *data_0208e4b8[];
 
@@ -18,8 +21,9 @@ extern void _ZN9ActorBaseD1Ev(struct Scene *self);              /* 0x02043d48 */
 extern void _ZN6Memory10DeallocateEPvP4Heap(void *ptr, struct Heap *heap); /* 0x0203c1e8 */
 extern struct Heap *data_020a0eac;                   /* 0x020a0eac */
 
-struct Scene *_ZN5SceneD0Ev(struct Scene *self)
+struct Scene *_ZN9BootSceneD0Ev(struct Scene *self)
 {
+    self->vtable = (void **)data_02091528;
     self->vtable = (void **)data_02092680;
     self->vtable = (void **)data_0208e4b8;
     _ZN9ActorBaseD1Ev(self);
