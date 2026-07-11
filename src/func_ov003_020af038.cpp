@@ -1,7 +1,5 @@
 //cpp
-// NONMATCHING: different op / idiom (div=112). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
+// NONMATCHING: near-miss from DB (div=105)
 struct Obj {
   virtual void v0(); virtual void v1(); virtual void v2();
   virtual void m_c(int a, int b);
@@ -85,9 +83,8 @@ extern "C" int func_ov003_020af038(char* c) {
             struct Row020a0de8 *row = &data_020a0de8[data_020a0e40];
             unsigned char temp_r1_2 = row->b0;
             if (temp_r1_2 != 0) {
-                unsigned char temp_r0_2 = U8(0x114);
-                int var_ip = 0;
-                if ((int)temp_r0_2 > 0) {
+                if (U8(0x114) > 0) {
+                    int var_ip = 0;
                     unsigned char row_b2 = row->b2;
                     unsigned char row_b3 = row->b3;
                     do {
@@ -112,7 +109,7 @@ extern "C" int func_ov003_020af038(char* c) {
                             break;
                         }
                         var_ip += 1;
-                    } while (var_ip < (int)temp_r0_2);
+                    } while (var_ip < (int)U8(0x114));
                 }
             }
             if ((var_lr == 0) && (U8(0x135) == 2) && (U8(0x133) == 0) && (data_0209caa0[0x42] == 0)) {
