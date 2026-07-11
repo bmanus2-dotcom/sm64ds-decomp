@@ -737,6 +737,58 @@ divergence is exactly the `mov/mov/ldm!/stm!` register pair of a struct-copy loo
 - **The oracle stays.** Understanding shrinks the number of compile-and-check iterations; it
   never removes the check. "Matched" means the bytes are identical, full stop.
 
+## 6n. ov092 near-miss session levers (2026-07-11)
+
+Three parked "not reachable from C" regalloc near-misses cracked byte-exact
+(func_ov092_021316d8, func_ov092_021311b0, func_ov092_02131010). New rules:
+
+- **Spell shift-chains as the CAST they came from.** A `lsl #28 / asr #16 / lsl #16 /
+  lsr #16 / asr #4 / lsl #2` index chain written as five explicit shift statements
+  mis-colors the whole downstream expression (table pointer / pool const / sum swap
+  registers, killing an r5 spill the ROM has). Written as the source-level casts -
+  `s16 t = (s16)((raw + 1) << 12); idx = ((u16)t >> 4) * 2;` with an element index -
+  the same instructions come out AND the register story matches (fixed the push set
+  and frame offset for free). Manual shift-spelling is semantically equal but
+  allocates differently (func_ov092_021316d8).
+- **When the ROM predicates one if/else arm, make THAT arm the `else`.** mwccarm
+  if-converts the ELSE arm (predicated body + `bge` over it) and branches the THEN
+  arm. `if (k >= 0) {A} else {B}` emitted blt/branch shape across every spelling of
+  A; `if (k < 0) {B} else {A}` predicated A (5 insns: lslge/ldrshge/ldrshge/addge/
+  strhge) on first try. Pair with a named temp for the RMW load (`s16 t = ang[k];
+  ang[k] = (s16)(t + a4);`) to order the table load before the stack-arg reload
+  (func_ov092_021316d8).
+- **Compound `+=` vs explicit `=` on laundered-pointer RMWs is a coloring lever.**
+  Three 6g-laundered halfword pointers + a named base: `*p = (s16)(*p + base[i])`
+  colors the pointers r3/lr/ip with temp r2; `*p += base[i]` colors them ip/r2/lr
+  with temp r3 (the ROM's). The compound form also flips which `add` is emitted
+  first (RHS base add before LHS pointer add); if the ROM wants the LHS add first,
+  re-derive the base INLINE per statement (`((s16 *)(c + 0x400))[i]` each time, no
+  named base local) - CSE still merges to one add but generation order follows the
+  LHS (found by the permuter on func_ov092_021311b0, reproduced by hand on
+  func_ov092_02131010's zero-block: inline re-deref fixed a 3-way rotation there too).
+- **Write-only shadow struct: `volatile` + named scalar locals.** When the ROM keeps
+  a stack object whose stores are all dead (a "tmp" vector built, adjusted, then
+  copied on to a second vector from REGISTERS), every plain aggregate spelling
+  (struct assign, int[3], field-wise) gets fully scalar-replaced and the frame
+  shrinks. The shape that matches: `volatile Vector3 tmp;` + plain named ints
+  (`x = load; tmp.x = x; ... y = y - K; tmp.y = y; dust.x = x; ...`) - volatile
+  retains every store in source order, the named locals keep the values in
+  registers for the second copy, and no volatile READ is ever emitted because the
+  source never reads tmp back (func_ov092_02131010, the "LandingDust double-store").
+- **Stack layout is declaration order, low to high** (volatile arrays and structs
+  included): `saved[3]` then `v1` then `v2` lands sp+0 / sp+0xc / sp+0x18
+  (func_ov092_021311b0; confirmed again on func_ov092_02131010's tmp/eq/dust).
+- **Friendly extern aliases read BLIND in linkcheck.** `Particle_System_NewSimple`
+  compiled fine but linkcheck could not resolve it; the config symbol is
+  `_ZN8Particle6System9NewSimpleEj5Fix12IiES2_S2_` (0x02022e98). Use the mangled
+  name from config/arm9/symbols.txt in new sources (same lesson as the division
+  `_u32_div_f` aliases).
+- **2-instruction scheduler-order residuals ARE permuter-crackable.** The "ordering
+  floor" note (cond-move polarity, store batching) does not extend to adjacent
+  independent-instruction swaps: the permuter flipped one instantly on
+  func_ov092_021311b0 (its mutation: inline the base re-deref). Route 2-div
+  add/add or mov/str swaps to the permuter before calling floor.
+
 ## 8. The `asm`-block escape hatch (for hand-written-asm SDK primitives)
 
 Some functions -- especially arm9 NITRO-SDK primitives -- are HAND-WRITTEN ASSEMBLY that NO C
