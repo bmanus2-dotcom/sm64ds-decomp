@@ -623,6 +623,27 @@ div on func_ov007_020ca308, paired with `#pragma opt_strength_reduction off` and
 u64-mask laundering for a separate `+0x18` RMW site, Fable, div 79->0 to full MATCH).
 Try the subscript form before parking an index-variable spill as a coloring floor.
 
+## 6k. Callee-saved locals color in REVERSE declaration order (2026-07-10)
+
+The section-2 rule "register allocation follows declaration order" has a precise
+DIRECTION for the callee-saved band (r7-r10/sb/sl), learned cracking the biggest
+unmatched function in the game one-shot on Opus (_ZN5Stage9PS_RenderEv, arm9 0xb50 /
+724 insns, div 21 -> 0). The long-lived locals that survive across calls are handed the
+callee-saved registers in REVERSE of their C declaration order: the LAST-declared
+long-lived local takes r7, the next-to-last r8, then r9, r10, sb, sl ascending. The
+local declared LAST also tends to be the one SPILLED to a stack slot when pressure
+exceeds the callee-saved set.
+
+So to reproduce a target that colors `r7<-A, r8<-B, sb<-C, sl<-D` (and spills E), declare
+them top-to-bottom as `D, C, B, A, E` - i.e. write the decl list in the register order
+you want, LOWEST-numbered register's variable LAST, the spill victim dead last. On
+PS_Render the winning decl block was `int var_sl; unsigned char var_sb; unsigned char
+var_r8; int var_r7; int sp18;` (var_r7 last of the register group -> r7; sp18 truly last
+-> spilled). Every natural/forward decl order mis-colored the render loop. This is a
+cheap, deterministic permutation to try FIRST on any big-function loop that is
+byte-identical except a consistent callee-saved renaming, before reaching for the
+statement-order (6e) or store-order (6g) levers. Now in the sched_run.js prompt.
+
 ## 7. Workflow implications
 
 - **Free tiers first, every cycle:** `clone.py --apply` (byte-identical retarget) then
