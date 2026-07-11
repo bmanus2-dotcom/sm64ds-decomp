@@ -610,6 +610,18 @@ Cracked `_ZN10SphereClsn10DetectClsnEv` (SphereClsn::DetectClsn, div 16 -> 0, Fa
 floor - the plain floor (register-coloring swap with NO virtual call feeding it) is
 still unreachable and should still be parked.
 
+**Confirmed NOT applicable (2026-07-11):** a symmetric `sb`/`sl` (dst-temp/src-temp)
+coloring swap in an inlined `ldm!/stm!` aggregate-copy loop with NO call in the loop
+body - mwccarm invariantly assigns dst-temp to `sb`, src-temp to `sl` regardless of
+decl order, block-scoped temps, array-subscript form, reference binding, or a
+fake-dependency ternary; applying the 6i call-result scoping trick here made it
+WORSE (div 8 -> 20). This is the genuine plain floor 6i itself warns about - do not
+retry 6i on a writeback-temp swap with no intervening call. (`func_ov055_02111358` /
+`_ZN11MirrorLuigi6RenderEv`, Opus reached div 13 -> 8 via decl reorder (i first, dst
+before src) fixing the OUTER counter/pointer coloring; Fable exhausted 8 attempts on
+the residual inner sb/sl swap with zero further movement - parked in nearmiss/db.jsonl
+at div 8.)
+
 ## 6j. Array-subscript indexing defeats a LICM index*scale hoist under EBB-local CSE (2026-07-10)
 
 Companion to 6e's `#pragma opt_common_subs off` master lever. Once the pragma flips CSE

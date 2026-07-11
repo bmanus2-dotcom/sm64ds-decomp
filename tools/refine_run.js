@@ -63,7 +63,7 @@ STRUCTURAL LEVERS (these fix what the permuter cannot; pick by what the diff sho
 - DUPLICATED early-exit epilogue (popeq/bxeq repeated instead of a beq to the shared tail): '#pragma optimize_for_size on' above the function
 - halfword/byte access at offset >= 0x100 in the target with a materialized base: that is ENCODING-forced - plain '*(short*)(p+0x100) = k' reproduces it; and a base passed as 'this'/call-arg materializes too (Sub *b = &c->sub; b->m(...))
 - stack slots optimized away: a volatile array keeps them live
-For the full catalogue read notes/pret-idioms.md and notes/mwccarm-codegen.md (sec 6e has the newest levers).
+For the full catalogue read notes/pret-idioms.md and notes/mwccarm-codegen.md - sec 2 is the register-coloring wall, 6e/6i/6j/6k/6l are the newest levers (6k: callee-saved locals color in REVERSE declaration order; 6j: array-subscript vs pointer-arithmetic indexing under EBB-local CSE; 6i: block-scoped temp around a call result flips loop coloring).
 
 MATERIALIZED BASE (add rX,base,#imm then [rX] where your C folds to [base,#imm]): the LEVER is the u64-mask laundering idiom - *(int *)(((int)base + 0xOFF) & 0xFFFFFFFFFFFFFFFF) - the identity AND blocks offset folding and forces the add. Verified on multiple previously-floor functions. Also check: halfword/byte at offset >= 0x100 materializes from a plain cast; a base the ROM passes to a call materializes via a pointer arg (Sub *b = &c->sub; b->m(...)). If the residual is pure two-word store-EMISSION order, stop and report your best.
 
