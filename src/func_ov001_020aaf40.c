@@ -1,6 +1,3 @@
-// NONMATCHING: different op / idiom (div=41). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 extern void func_ov001_020aa6b0(void *node, int v);
 extern void func_ov001_020aa420(void);
 extern int _ZN6Player8HasNoCapEv(void *p);
@@ -16,10 +13,12 @@ extern char *data_0209f394;
 extern unsigned char data_ov001_020ad624;
 extern unsigned char data_ov001_020ad62c[3];
 
+enum { false, true };
+
 void func_ov001_020aaf40(void)
 {
-    int i;
     int j;
+    int i;
 
     if (data_ov001_020ad620 != 0) {
         data_ov001_020ad620 -= 1;
@@ -28,7 +27,7 @@ void func_ov001_020aaf40(void)
             while (node) {
                 if (*(int*)(node + 0x14) != -1 && *(unsigned char*)(node + 0x1a) != 0) {
                     int v;
-                    *(unsigned char*)(node + 0x1a) -= 1;
+                    *(unsigned char *)(int)(((long long)(int)(node + 0x1a)) & 0xFFFFFFFFFFFFFFFFLL) -= 1;
                     v = *(unsigned char*)(node + 0x1a);
                     if (v == 0) {
                         func_ov001_020aa6b0(node, 1);
@@ -43,7 +42,17 @@ void func_ov001_020aaf40(void)
             data_0209f284 = 0;
     }
 
-    if ((int)(data_0209f2d8 == 1) == 0) {
+    {
+        int t;
+        t = data_0209f2d8;
+        t = t == 1;
+        if (t != false) {
+            func_ov001_020aa420();
+            return;
+        }
+    }
+
+    {
         char *pl = data_0209f394;
         if (_ZN6Player8HasNoCapEv(pl) && !_ZN6Player15IsCollectingCapEv(pl)) {
             func_ov001_020aadac();
@@ -51,13 +60,10 @@ void func_ov001_020aaf40(void)
             return;
         }
         for (j = 0; j < 3; j++) {
-            unsigned char x = data_ov001_020ad62c[j];
-            if (x & 2)
-                data_ov001_020ad62c[j] = x & ~3;
+            if (data_ov001_020ad62c[j] & 2)
+                data_ov001_020ad62c[j] &= ~3;
         }
         func_ov001_020aaa54();
         data_ov001_020ad624 = 0;
-        return;
     }
-    func_ov001_020aa420();
 }
