@@ -1,26 +1,25 @@
-#define AT(p, off) ((void *)(int)(((long long)(int)((char *)(p) + (off))) & 0xFFFFFFFFFFFFFFFFLL))
-
-void func_ov007_020c80c8(char *c, int m, int sh)
+void func_ov007_020c80c8(char *o, int a, int s)
 {
-    if ((*(int *)(c + 0x20) & 1) == 0) {
-        if (*(short *)(c + 0x1c) == 0x1000) {
-            int *p = (int *)AT(c, 0xc);
-            int prod = (int)(((long long)m * *(int *)(c + 0xc) + 0x800) >> 12);
-            *p = *p + ((*(int *)(c + 0x18) - prod) >> sh);
+    if (!(*(int *)(o + 0x20) & 1)) {
+        if (*(short *)(o + 0x1c) == 0x1000) {
+            int m = (int)(((long long)a * *(int *)(o + 0xc) + 0x800) >> 12);
+            int *p = (int *)(int)(((long long)(int)(o + 0xc)) & 0xFFFFFFFFFFFFFFFFLL);
+            *p += (*(int *)(o + 0x18) - m) >> s;
         } else {
-            int *q = (int *)AT(c, 0x18);
-            int prod = (int)(((long long)m * *(int *)(c + 0xc) + 0x800) >> 12);
-            int *p;
-            int prod2;
-            *q = *q - prod;
-            p = (int *)AT(c, 0xc);
-            prod2 = (int)(((long long)*(int *)(c + 0x18) * (*(short *)(c + 0x1c) >> sh) + 0x800) >> 12);
-            *p = *p + prod2;
+            int m = (int)(((long long)a * *(int *)(o + 0xc) + 0x800) >> 12);
+            int *p18 = (int *)(int)(((long long)(int)(o + 0x18)) & 0xFFFFFFFFFFFFFFFFLL);
+            int m2;
+            int *p0c;
+            *p18 -= m;
+            m2 = (int)(((long long)*(int *)(o + 0x18) * (*(short *)(o + 0x1c) >> s) + 0x800) >> 12);
+            p0c = (int *)(int)(((long long)(int)((char *)o + 0xc)) & 0xFFFFFFFFFFFFFFFFLL);
+            *p0c += m2;
         }
         {
-            int *t = (int *)AT(*(char **)c, 8);
-            *t = *t + (*(int *)(c + 0xc) >> sh);
+            int *base = *(int **)o;
+            int *q = (int *)(int)(((long long)(int)((char *)base + 8)) & 0xFFFFFFFFFFFFFFFFLL);
+            *q += *(int *)(o + 0xc) >> s;
         }
     }
-    *(int *)(c + 0x18) = 0;
+    *(int *)(o + 0x18) = 0;
 }

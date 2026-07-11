@@ -222,6 +222,15 @@ initializers were still a rich vein at 0x200-0x400). When even fresh bands come 
 accessible vein is worked: switch to the free tiers (clone/paramclone, recurring.py -> new
 templates), the REFINE tier below, and hand-fix, and stop the paid fresh fan-out.
 
+**2026-07-11 (session 2, parallel >=0x280 band): 0x280-0x400 is now floor-dense too** -
+9/30 (30%) at ~314K out-tok/landed on Sonnet 5 xhigh + m2c; the hits were the few
+high-sim siblings (0.93/0.82 matched first try), and 14 of 21 misses were pure
+coloring/cond-move-polarity floor - the __sinit vein that made 0x200-0x400 rich is
+largely drained here. **0x400-0x800 remains the better big-band lane** (67% historic);
+run it before 0x280-0x400 when pushing bytes. On the misses: per the LARGE-band triage
+above, div<=8 "floor"-labeled larges are NOT dead - pool them and run a Fable refine
+(9/9 promotion record); do that instead of re-grinding the fresh band.
+
 **Two agents, one band (measured 2026-07-01):** both sides run the same deterministic
 scheduler, so simultaneous preps pick the SAME functions - the coworker's first 0x280-0x400
 prep conflicted 20/20 with our locks. Per-function claims locking absorbs this (conflicted

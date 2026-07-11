@@ -623,6 +623,56 @@ div on func_ov007_020ca308, paired with `#pragma opt_strength_reduction off` and
 u64-mask laundering for a separate `+0x18` RMW site, Fable, div 79->0 to full MATCH).
 Try the subscript form before parking an index-variable spill as a coloring floor.
 
+## 6k. Callee-saved locals color in REVERSE declaration order (2026-07-10)
+
+The section-2 rule "register allocation follows declaration order" has a precise
+DIRECTION for the callee-saved band (r7-r10/sb/sl), learned cracking the biggest
+unmatched function in the game one-shot on Opus (_ZN5Stage9PS_RenderEv, arm9 0xb50 /
+724 insns, div 21 -> 0). The long-lived locals that survive across calls are handed the
+callee-saved registers in REVERSE of their C declaration order: the LAST-declared
+long-lived local takes r7, the next-to-last r8, then r9, r10, sb, sl ascending. The
+local declared LAST also tends to be the one SPILLED to a stack slot when pressure
+exceeds the callee-saved set.
+
+So to reproduce a target that colors `r7<-A, r8<-B, sb<-C, sl<-D` (and spills E), declare
+them top-to-bottom as `D, C, B, A, E` - i.e. write the decl list in the register order
+you want, LOWEST-numbered register's variable LAST, the spill victim dead last. On
+PS_Render the winning decl block was `int var_sl; unsigned char var_sb; unsigned char
+var_r8; int var_r7; int sp18;` (var_r7 last of the register group -> r7; sp18 truly last
+-> spilled). Every natural/forward decl order mis-colored the render loop. This is a
+cheap, deterministic permutation to try FIRST on any big-function loop that is
+byte-identical except a consistent callee-saved renaming, before reaching for the
+statement-order (6e) or store-order (6g) levers. Now in the sched_run.js prompt.
+
+## 6l. Store-type and magic-divisor levers (2026-07-11 coddog batch 1)
+
+Three levers surfaced cracking the 0x100-0x280 spread band (21/30 landed):
+
+- **Byte-fill of -1: signed store emits `mvn`, unsigned emits `mov #0xff`.** A `-1`
+  written through a *signed* byte pointer (`s8`/`signed char`) compiles to `mvn r3,#0`;
+  the same value through a `u8` pointer compiles to `mov r3,#0xff`. When a reset/fill
+  loop diverges by exactly that one instruction, flip the store type rather than the
+  literal. (func_02068ae8, 1-div -> match.)
+
+- **Reverse-derive the divisor, write the plain `/N`.** When the ROM shows a
+  magic-multiply-plus-shift sequence, do NOT hand-emit the shifts: recover the original
+  constant N from the magic/shift pair (Hacker's-Delight back-computation) and write the
+  literal `x / N`. mwccarm regenerates the identical magic sequence, and small errors in
+  a hand-rolled shift chain are avoided. (func_ov002_020b5c4c, `/2200` and `/1500`.)
+
+- **Named `u16` local forces the `and/lsl/lsrs` narrowing triple over a single `ands`.**
+  Assigning a masked value into a declared `u16` local (then using it) produces the
+  and-then-shift-pair narrowing idiom; doing the mask inline collapses to `ands`. Use the
+  named-local spelling when the target shows the three-instruction narrowing.
+  (_ZN6Player17St_SlideKick_MainEv.)
+
+New floor shapes confirmed (route to permuter/hand-fix, stop grinding from C): the
+**SMULL RdLo/RdHi register swap** and the **mul-destination-register choice** inside
+fixed-point sin/cos matrix-build blocks (func_0204be40, func_0204bbd8), and an
+**address-of hoisting ORDER** floor where N independent `&field` computations are emitted
+in a different but semantically-free order (func_02071d3c) - a sibling of the 6e/6g
+ordering floors, unmoved by decl-order permutation.
+
 ## 7. Workflow implications
 
 - **Free tiers first, every cycle:** `clone.py --apply` (byte-identical retarget) then
