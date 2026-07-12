@@ -1,38 +1,42 @@
-// NONMATCHING: different op / idiom (div=18). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
-struct S300 { char pad[0xc6]; unsigned short f; };
-extern int IsOnWall(void* thiz);
-extern void* GetWallResult(void* thiz);
-extern void CopyNormalTo(void* thiz, void* v);
-extern short ReflectAngle(void* thiz, int a, int b, short c);
-extern void func_ov062_02118004(void* c, int a1);
-extern void func_ov062_02117994(char* c, int idx);
-extern int WillHitFrame(void* thiz, int f);
-extern void func_ov062_021175c0(void* c);
-extern int Finished(void* thiz);
+typedef short s16;
+typedef unsigned short u16;
+struct Vector3 { int x, y, z; };
+extern int _ZNK12WithMeshClsn8IsOnWallEv(void *w);
+extern void *_ZNK12WithMeshClsn13GetWallResultEv(void *w);
+extern void _ZNK11SurfaceInfo12CopyNormalToER7Vector3(void *s, struct Vector3 *v);
+extern s16 _ZN5Actor12ReflectAngleE5Fix12IiES1_s(void *self, int a, int b, s16 ang);
+extern void func_ov062_02118004(void *c, int a1);
+extern void func_ov062_02117994(char *c, int idx);
+extern int _ZNK9Animation12WillHitFrameEi(void *anim, int f);
+extern void func_ov062_021175c0(void *c);
+extern int _ZN9Animation8FinishedEv(void *anim);
 
-void func_ov062_02118a50(char* c){
-  if (*(int*)(c+0x98) != 0) {
-    if (IsOnWall(c+0x144)) {
-      void* sr = GetWallResult(c+0x144);
-      CopyNormalTo((char*)sr+4, c+0xe0);
-      *(short*)(c+0x94) = ReflectAngle(c, *(int*)(c+0xe0), *(int*)(c+0xe8), *(short*)(c+0x94));
+void func_ov062_02118a50(char *c)
+{
+    if (*(int *)(c + 0x98) != 0) {
+        if (_ZNK12WithMeshClsn8IsOnWallEv(c + 0x144) != 0) {
+            void *sr = _ZNK12WithMeshClsn13GetWallResultEv(c + 0x144);
+            _ZNK11SurfaceInfo12CopyNormalToER7Vector3((char *)sr + 4, (struct Vector3 *)(c + 0xe0));
+            *(s16 *)(c + 0x94) = _ZN5Actor12ReflectAngleE5Fix12IiES1_s(
+                c, *(int *)(c + 0xe0), *(int *)(c + 0xe8), *(s16 *)(c + 0x94));
+        }
+        func_ov062_02118004(c, 0x4cc);
+        return;
     }
-    func_ov062_02118004(c, 0x4cc);
-    return;
-  }
-  struct S300* o = (struct S300*)(c+0x300);
-  if (o->f != 0) {
-    unsigned short* t = (unsigned short*)(c+0x3c6); *t = *t - 1;
-    if (o->f != 0) return;
-    func_ov062_02117994(c, 8);
-    return;
-  }
-  if (WillHitFrame(c+0x350, 0x1e)) {
-    func_ov062_021175c0(c);
-  }
-  if (Finished(c+0x350) == 0) return;
-  *(int*)(c+0x38c) = 1;
-  func_ov062_02117994(c, 2);
+
+    {
+        if (*(u16 *)(c + 0x3c6) != 0) {
+            u16 *p = (u16 *)(((long long)(int)(c + 0x3c6)) & 0xFFFFFFFFFFFFFFFFLL);
+            *p = (u16)(*p - 1);
+            if (*(u16 *)((c + 0x300) + 0xc6) != 0) return;
+            func_ov062_02117994(c, 8); return;
+        }
+    }
+
+    if (_ZNK9Animation12WillHitFrameEi(c + 0x350, 0x1e) != 0)
+        func_ov062_021175c0(c);
+    if (_ZN9Animation8FinishedEv(c + 0x350) == 0)
+        return;
+    *(int *)(c + 0x38c) = 1;
+    func_ov062_02117994(c, 2);
 }
