@@ -144,6 +144,7 @@ def resolve_name(name):
 
 
 def ingest(args):
+    import worklist as WL
     db = load_db()
     meta = load_meta(args.worklist)
     # MATCHED only, not load_done(): parked functions keep their pending drafts
@@ -174,6 +175,15 @@ def ingest(args):
             addr, size, mod, thex = ex["addr"], ex["size"], ex["module"], ex["target_hex"]
         key = (mod, addr)
         if L.make_key(mod, addr) in done:   # already matched -- not a pending near-miss
+            drops.append(key)
+            continue
+        stext = WL.read_src_text(name)
+        if stext is not None and "NONMATCHING" not in stext[:400]:
+            # matched in committed src/ -- the local matched ledger is stale on
+            # multi-contributor checkouts, so without this check a seeds file
+            # generated before someone else's match RESURRECTS a ghost entry
+            # that prune-matched already dropped (67 came back that way on
+            # 2026-07-12). Skip before the expensive evaluate().
             drops.append(key)
             continue
         div, ok = evaluate(src, name, bytes.fromhex(thex))
