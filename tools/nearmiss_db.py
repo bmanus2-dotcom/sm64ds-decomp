@@ -145,6 +145,7 @@ def resolve_name(name):
 
 def ingest(args):
     import worklist as WL
+    import names as NM
     db = load_db()
     meta = load_meta(args.worklist)
     # MATCHED only, not load_done(): parked functions keep their pending drafts
@@ -177,7 +178,11 @@ def ingest(args):
         if L.make_key(mod, addr) in done:   # already matched -- not a pending near-miss
             drops.append(key)
             continue
-        stext = WL.read_src_text(name)
+        # Resolve the CURRENT symbol name at (mod, addr): the seed's `name` may be a
+        # stale func_ADDR placeholder while the committed src/ file is under the real
+        # symbol (see tools/names.py). Keying the src-file check by the stored name
+        # missed renamed matches, resurrecting ghosts prune-matched had dropped.
+        stext = WL.read_src_text(NM.name_at(mod, addr) or name)
         if stext is not None and "NONMATCHING" not in stext[:400]:
             # matched in committed src/ -- the local matched ledger is stale on
             # multi-contributor checkouts, so without this check a seeds file
@@ -319,11 +324,17 @@ def prune_matched(args):
     """Drop entries whose function already has a committed, CI-validated match in
     src/ (a src file without a NONMATCHING header). The local matched ledger is
     often stale on multi-contributor checkouts, so ingest's matched_set() drop
-    misses these; they linger as ghosts and pollute stats and export-close."""
+    misses these; they linger as ghosts and pollute stats and export-close.
+
+    The src-file check resolves the CURRENT symbol name at (module, addr) via
+    tools/names.py -- an entry named with a stale func_ADDR placeholder is still
+    detected when its match landed under the real symbol. Surviving entries also
+    have their display name resynced so the label never drifts from the key."""
     import worklist as WL
+    import names as NM
     db = load_db()
     ghosts = [key for key, r in db.items()
-              for text in [WL.read_src_text(r["name"])]
+              for text in [WL.read_src_text(NM.name_at(r["module"], r["addr"]) or r["name"])]
               if text is not None and "NONMATCHING" not in text[:400]]
     if args.dry_run:
         for key in ghosts:
@@ -333,13 +344,45 @@ def prune_matched(args):
         return
     with locked():
         db = load_db()
-        dropped = 0
+        dropped = renamed = 0
         for key in ghosts:
             if db.pop(key, None) is not None:
                 dropped += 1
+        for r in db.values():                       # resync survivors' labels to the key
+            cur = NM.name_at(r["module"], r["addr"])
+            if cur and cur != r["name"]:
+                r["name"] = cur
+                renamed += 1
         save_db(db)
         remaining = len(db)
-    print(f"dropped {dropped} ghost entries (matched in committed src/); DB now {remaining}.")
+    print(f"dropped {dropped} ghost entries (matched in committed src/); "
+          f"resynced {renamed} stale names; DB now {remaining}.")
+
+
+def resync_names(args):
+    """Rewrite each entry's display name to the current symbol at its (module, addr).
+    The DB is keyed by (module, addr); `name` is only a label and goes stale when a
+    symbol import renames a func_ADDR placeholder. Idempotent; run after symbol imports
+    so stats and any name-keyed cross-reference stop lying (tools/names.py)."""
+    import names as NM
+    db = load_db()
+    changes = [(r["module"], r["addr"], r["name"], cur)
+               for r in db.values()
+               for cur in [NM.name_at(r["module"], r["addr"])]
+               if cur and cur != r["name"]]
+    if args.dry_run:
+        for mod, addr, old, cur in changes[:40]:
+            print(f"  {mod:7} {addr}  {old[:34]:34} -> {cur}")
+        print(f"{len(changes)} stale names (dry run)")
+        return
+    with locked():
+        db = load_db()
+        for r in db.values():
+            cur = NM.name_at(r["module"], r["addr"])
+            if cur and cur != r["name"]:
+                r["name"] = cur
+        save_db(db)
+    print(f"resynced {len(changes)} stale names.")
 
 
 def bank_matches(args):
@@ -417,6 +460,10 @@ def main():
     p.add_argument("--dry-run", action="store_true",
                    help="list the ghost entries without dropping them")
     p.set_defaults(fn=prune_matched)
+    p = sub.add_parser("resync-names")
+    p.add_argument("--dry-run", action="store_true",
+                   help="list stale names without rewriting them")
+    p.set_defaults(fn=resync_names)
     args = ap.parse_args()
     args.fn(args)
 
