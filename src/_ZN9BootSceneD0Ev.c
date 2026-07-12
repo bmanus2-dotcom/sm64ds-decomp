@@ -1,4 +1,3 @@
-// NONMATCHING: vtable-pool loads emit in source order; ROM interleaves the two vtable stores differently (2-slot ordering divergence, likely the pool-ordering floor). Byte-correct except those 2 slots. Was a false match (referenced _ZTV* names absent from config, so linkcheck was blind).
 /* _ZN9BootSceneD0Ev (deleting / D0) at 0x020235d4
  *
  * This is the BootScene flavor of the Scene deleting dtor; vtable chain

@@ -1,7 +1,6 @@
-// NONMATCHING: vtable-pool loads emit in source order; ROM interleaves the two vtable stores differently (2-slot ordering divergence, likely the pool-ordering floor). Byte-correct except those 2 slots. Was a false match (referenced _ZTV* names absent from config, so linkcheck was blind).
 /* Scene::~Scene (deleting / D0) at 0x0202e170
  *
- * vtable chain Scene -> ActorDerived:
+ * vtable chain Stage -> ActorDerived:
  *   0x02092680 = _ZTV5Stage
  *   0x0208e4b8 = data_0208e4b8
  *   bl 0x02043d48 = ActorBase::~ActorBase
