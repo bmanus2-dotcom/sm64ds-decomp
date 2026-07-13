@@ -1,5 +1,4 @@
 //cpp
-// NONMATCHING: size-exact 0x30ac, mismatch count 2 (case-1 preheader ldr pair order).
 // Cases 0/2/3/8/0xa..0x13 BYTE-EXACT.
 /*
  * Stage::PS_Update @ 0x0202635c size 0x30ac, mwccarm 1.2/sp2p3 -O4,p -lang c++
@@ -18,13 +17,9 @@
  *      "u8 s4 = e40; (void)s4" kept slot/r6 as index. With (2) in place the
  *      direct read no longer drops slot's r6 coloring.
  *
- * Residual (2 words, +0x7ac/+0x7b0): case-1 preheader emits ldr r4(&f238)
- *   before ldr sb(&de8); ROM emits sb first. Colors MATCH (r5=f2c8,r4=f238,
- *   sb=de8); pool layout MATCH; body of case1 MATCH including interleaved
- *   f238-store-before-f2c8-store. Pure independent-ldr schedule residual.
- *   Named-ptr assigns can get symbol order f2c8,de8,f238 but steal high regs
- *   and/or fire before mov fp. Direct globals keep colors+placement but always
- *   emit f238 before de8. See scratch/HANDOFF_Stage_PS_Update.md.
+ * Final match: moving the f238 store into the following unconditional scope,
+ *   after the displayed-level normalization, makes MWCC schedule the case-1
+ *   literal loads in ROM order without changing behavior.
  */
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -112,7 +107,7 @@ extern int data_0209fc68;
 extern int data_0209b454;
 extern int data_0209b464;
 extern s16 data_020756d0[];
-extern u8 data_02111150;
+extern u8 data_ov002_02111150;
 extern volatile u8 data_020a0e40;  /* active input slot */
 extern u8 data_020a0de8[]; /* touch: active   [slot*4]   */
 extern u8 data_020a0de9[]; /* touch: pressed  [slot*4]   */
@@ -367,7 +362,6 @@ void Stage::PS_Update()
                 if ((var_r0 != 0) && ((u32)(vx = DE8P(sl2 * 4)[2]) < 0x38U) && ((u32)DE8P(sl2 * 4)[3] < 0x20U)) {
                     u8 t;
                     data_0209f2c8 = (u8)(data_0209f2c8 - 1);
-                    data_0209f238 = 1;
                     var_fp = 1;
                     t = data_0209f2c8;
                     if (t == 0xFF)
@@ -376,6 +370,7 @@ void Stage::PS_Update()
                         u8 *p0 = &data_0209f210;
                         u8 *p1 = &data_0209f210;
                         u8 *p = ((u8)(vx & 0xff) < 0x38) ? p0 : p1;
+                        data_0209f238 = 1;
                         *p = (u8)(data_0208ee44 * 3);
                     }
                 } else {
@@ -611,7 +606,7 @@ void Stage::PS_Update()
             _ZN5Stage17UpdateMenuButtonsEb(0);
             data_0209f22c = data_0208ee44 << 3;
             data_0209f1ec = 0x13;
-            data_02111150 = 1;
+            data_ov002_02111150 = 1;
             func_02012790(0x56);
             return;
         }
@@ -632,7 +627,7 @@ void Stage::PS_Update()
             _ZN5Stage17UpdateMenuButtonsEb(0);
             data_0209f22c = data_0208ee44 << 3;
             data_0209f1ec = 6;
-            data_02111150 = 1;
+            data_ov002_02111150 = 1;
             func_02012790(0x55);
             return;
         }
