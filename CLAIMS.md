@@ -106,3 +106,4 @@ it is fair to take over: ping the claimant first.
 | ov072: func_ov072_02121368 (0x02121368, 0x174) + __sinit_ov072_02122414 (0x02122414, 0x2f4) | lunavyqo (Grok-assisted) | 2026-07-13 | done - both verified byte-identical |
 | ov025 func_ov025_021113f0 (0x021113f0, 0x3ec) | lunavyqo (Grok) | 2026-07-13 | **done** — verified byte-identical |
 | ov009: func_ov009_0211145c, func_ov009_021115d8, _ZN4Bird13InitResourcesEv | lunavyqo (Grok) | 2026-07-13 | **done** — 3 verified byte-identical |
+| ov064 batch11: 02115f98,02116220,02117220,Bully::Behavior,02117d24,RotatingFirebar::Behavior,02118760,LavaBubble::InitResources,02118ee4,021193b4,0211a4c4 | lunavyqo (Grok) | 2026-07-13 | **active** — matching batch |
