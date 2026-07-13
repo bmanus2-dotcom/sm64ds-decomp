@@ -207,6 +207,7 @@ def verify(name, wl):
 
 def crack_one(name, wl, attempts, row):
     t_in = t_out = 0
+    orig_div = None  # stored draft's divergence before refining; None if verify never ran
     att_log = []  # per-attempt lines, printed by the caller BELOW the result header
     try:
         ctx = run_tool(["tools/abrow.py", "--name", name, "--wl", wl])
@@ -214,10 +215,11 @@ def crack_one(name, wl, attempts, row):
         _WORKDIR.mkdir(exist_ok=True, parents=True)
         (_WORKDIR / f"{name}.src").write_text(draft, encoding="utf-8", newline="\n")
         best_div, vout = verify(name, wl)
+        orig_div = best_div  # the "from": stored draft's divergence before any refine attempt
         best_src = draft
         if best_div == 0:
             return {"name": name, "matched": True, "c_source": draft, "attempts": 0,
-                    "divergences": 0, "note": "stored draft already matches",
+                    "divergences": 0, "orig_div": orig_div, "note": "stored draft already matches",
                     "log": att_log}, 0, 0
 
         messages = [{"role": "user", "content":
@@ -259,7 +261,7 @@ def crack_one(name, wl, attempts, row):
                 stale += 1
             if div == 0:
                 return {"name": name, "matched": True, "c_source": src, "attempts": att,
-                        "divergences": 0, "note": note or "matched",
+                        "divergences": 0, "orig_div": orig_div, "note": note or "matched",
                         "log": att_log}, t_in, t_out
             if floor or stale >= 2:
                 break
@@ -269,11 +271,11 @@ def crack_one(name, wl, attempts, row):
                              f"Best so far is {best_div}. Try a different lever."})
         (_WORKDIR / f"{name}.src").write_text(best_src, encoding="utf-8", newline="\n")
         return {"name": name, "matched": False, "c_source": best_src,
-                "attempts": attempts, "divergences": best_div,
+                "attempts": attempts, "divergences": best_div, "orig_div": orig_div,
                 "note": note or "no improvement", "log": att_log}, t_in, t_out
     except Exception as e:  # one function failing must not sink the batch
         return {"name": name, "matched": False, "c_source": row.get("draft") or "",
-                "attempts": 0, "divergences": 999,
+                "attempts": 0, "divergences": 999, "orig_div": orig_div,
                 "note": f"driver error: {e}"[:300], "log": att_log}, t_in, t_out
 
 
@@ -375,6 +377,11 @@ def main():
                     # function's attempts indented below, so each function reads as one
                     # tidy unit and a new header means the previous one finished.
                     status = 'MATCH' if res['matched'] else 'div=' + str(res['divergences'])
+                    # Show the stored draft's starting divergence so a near-miss improvement (or
+                    # lack of one) is legible at a glance: "div=6 (from: 40)" vs "div=6 (from: 6)".
+                    orig = res.get('orig_div')
+                    if isinstance(orig, int) and orig > 0:
+                        status += f" (from: {orig})"
                     lines = [f"({len(results)}/{len(rows)}) {res['name']}: {status}"]
                     lines += [f"    {ln}" for ln in res.get('log', [])]
                     log("\n".join(lines))

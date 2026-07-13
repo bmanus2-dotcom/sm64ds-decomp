@@ -21,6 +21,7 @@ exact oracle / regperm-oracle code.
 import argparse
 import json
 import pathlib
+import random
 import re
 import sys
 
@@ -157,7 +158,7 @@ def main():
     ap.add_argument("--module", default=None)
     ap.add_argument("--addr", type=lambda x: int(x, 0), default=None)
     ap.add_argument("--min", type=lambda x: int(x, 0), default=0x0)
-    ap.add_argument("--max", type=lambda x: int(x, 0), default=0x200)
+    ap.add_argument("--max", type=lambda x: int(x, 0), default=None)
     ap.add_argument("--limit", type=int, default=0, help="0 = no limit")
     ap.add_argument("--no-template", action="store_true",
                     help="only functions no rule shape touches (the LLM pile)")
@@ -180,7 +181,13 @@ def main():
                          "matched lookalikes they have (most references first), so the "
                          "fan-out gets the best in-context examples. Collects the whole "
                          "pile then takes the top --limit.")
+    ap.add_argument("--random", action="store_true",
+                    help="pull unmatched functions uniformly at random (any size), reshuffled "
+                         "every run -- the Random role; an infinite loop re-rolls each batch")
     args = ap.parse_args()
+    # --random spans any size unless the caller set --max; other modes keep the 0x200 default.
+    if args.max is None:
+        args.max = 0x40000 if args.random else 0x200
 
     matched = L.matched_set()            # example pool: byte-exact matches only
     done = L.load_done()                 # matched + parked: skipped as targets
@@ -228,6 +235,80 @@ def main():
     # head of each list is that module's freshest top-of-pile). In default mode we
     # stream module-by-module and stop at --limit; in --spread mode we round-robin
     # across modules so a single batch skims the easy head of many modules at once.
+    def build_rec(label, name, addr, size, tgt, relocs):
+        """Disassemble, filter (thunk/easy/class/template), and annotate one function into a
+        worklist record with callee signatures + few-shot examples; None if it's filtered out."""
+        ins = list(S.md.disasm(tgt, 0))
+        if not ins or S.is_thunk(ins):
+            return None
+        if args.easy and not is_easy(ins):
+            return None
+        if args.klass:
+            d = DM.demangle(name)
+            if not d or d["class"] != args.klass:
+                return None
+        if args.no_template and has_template(name, ins, tgt, addr, relocs, gsyms):
+            return None
+        lines, callees, pool = annotate(name, addr, size, tgt, relocs, gsyms)
+        # the payoff: each callee's known signature, plus this function's own
+        sigs = {c: KB.sig_for(c, kb) for c in callees}
+        sigs = {c: v for c, v in sigs.items() if v}
+        rec = {"module": label, "name": name, "addr": f"0x{addr:08x}",
+               "size": f"0x{size:x}", "target_hex": tgt.hex(), "self": KB.sig_for(name, kb),
+               "callees": callees, "signatures": sigs, "pool": pool, "disasm": lines}
+        if args.examples > 0:
+            # prefer same mnemonic sequence (precise), then same callee set
+            cands = list(ex_mnem.get(mnem_key(ins), []))
+            if callees:
+                cands += ex_callee.get(frozenset(callees), [])
+            seen, ex = set(), []
+            for en, es in cands:
+                if en == name or en in seen:
+                    continue
+                seen.add(en)
+                ex.append({"name": en, "c_source": es})
+                if len(ex) >= args.examples:
+                    break
+            if ex:
+                rec["examples"] = ex
+        if args.similar:
+            # similarity = count of already-matched lookalikes (same mnemonic
+            # shape or same callee set). More references -> schedule earlier.
+            rec["_sim"] = (len(ex_mnem.get(mnem_key(ins), []))
+                           + len(ex_callee.get(frozenset(callees), [])))
+        return rec
+
+    # --random (the Random role): pull unmatched functions uniformly at random. Collect all
+    # candidates cheaply (name/addr/size), shuffle, then annotate just up to --limit of them.
+    # random reseeds per process, so the console's infinite loop -- which spawns a fresh worklist
+    # run each cycle -- re-rolls a different set every batch.
+    if args.random:
+        cands = []
+        for mod in MOD.modules():
+            if args.module and mod["name"] != ("main" if args.module == "arm9" else args.module):
+                continue
+            label = "arm9" if mod["name"] == "main" else mod["name"]
+            data = mod["bin"].read_bytes()
+            for name, addr, size in sweep.funcs(mod):
+                if (label, addr) in done or not (args.min <= size <= args.max):
+                    continue
+                cands.append((label, name, addr, size, mod, data))
+        random.shuffle(cands)
+        reloc_cache = {}
+        emitted = 0
+        for label, name, addr, size, mod, data in cands:
+            if args.limit and emitted >= args.limit:
+                break
+            relocs = reloc_cache.get(mod["name"])
+            if relocs is None:
+                relocs = reloc_cache[mod["name"]] = R.load_relocs_file(mod["relocs"])
+            tgt = data[addr - mod["base"]:addr - mod["base"] + size]
+            rec = build_rec(label, name, addr, size, tgt, relocs)
+            if rec is not None:
+                emit(rec)
+                emitted += 1
+        return
+
     buckets = {}
     order = []
     for mod in MOD.modules():
@@ -246,44 +327,9 @@ def main():
             if (args.addr is None and (label, addr) in done) or not (args.min <= size <= args.max):
                 continue
             tgt = data[addr - mod["base"]:addr - mod["base"] + size]
-            ins = list(S.md.disasm(tgt, 0))
-            if not ins or S.is_thunk(ins):
+            rec = build_rec(label, name, addr, size, tgt, relocs)
+            if rec is None:
                 continue
-            if args.easy and not is_easy(ins):
-                continue
-            if args.klass:
-                d = DM.demangle(name)
-                if not d or d["class"] != args.klass:
-                    continue
-            if args.no_template and has_template(name, ins, tgt, addr, relocs, gsyms):
-                continue
-            lines, callees, pool = annotate(name, addr, size, tgt, relocs, gsyms)
-            # the payoff: each callee's known signature, plus this function's own
-            sigs = {c: KB.sig_for(c, kb) for c in callees}
-            sigs = {c: v for c, v in sigs.items() if v}
-            rec = {"module": label, "name": name, "addr": f"0x{addr:08x}",
-                   "size": f"0x{size:x}", "target_hex": tgt.hex(), "self": KB.sig_for(name, kb),
-                   "callees": callees, "signatures": sigs, "pool": pool, "disasm": lines}
-            if args.examples > 0:
-                # prefer same mnemonic sequence (precise), then same callee set
-                cands = list(ex_mnem.get(mnem_key(ins), []))
-                if callees:
-                    cands += ex_callee.get(frozenset(callees), [])
-                seen, ex = set(), []
-                for en, es in cands:
-                    if en == name or en in seen:
-                        continue
-                    seen.add(en)
-                    ex.append({"name": en, "c_source": es})
-                    if len(ex) >= args.examples:
-                        break
-                if ex:
-                    rec["examples"] = ex
-            if args.similar:
-                # similarity = count of already-matched lookalikes (same mnemonic
-                # shape or same callee set). More references -> schedule earlier.
-                rec["_sim"] = (len(ex_mnem.get(mnem_key(ins), []))
-                               + len(ex_callee.get(frozenset(callees), [])))
             if label not in buckets:
                 buckets[label] = []
                 order.append(label)
