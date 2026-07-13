@@ -105,3 +105,4 @@ it is fair to take over: ping the claimant first.
 | ov018 func_ov018_02111fac (0x02111fac, size 0x230) | lunavyqo (Grok-assisted) | 2026-07-12 | done - verified byte-identical; API claim clm_5551ed44d304 kept active |
 | ov072: func_ov072_02121368 (0x02121368, 0x174) + __sinit_ov072_02122414 (0x02122414, 0x2f4) | lunavyqo (Grok-assisted) | 2026-07-13 | done - both verified byte-identical |
 | ov025 func_ov025_021113f0 (0x021113f0, 0x3ec) | lunavyqo (Grok) | 2026-07-13 | **done** — verified byte-identical |
+| ov079 batch13: 02123bcc,02124008,02124638,021249f0,02124b08,02124dec,02125504,021256d4,021258fc,02125b44,Whomp::InitResources,BulletBill::Behavior,02126f8c | lunavyqo (Grok) | 2026-07-13 | **active** — matching batch |
