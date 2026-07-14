@@ -871,6 +871,26 @@ u64-address laundering of RMW lvalues, `#pragma opt_strength_reduction off` for
 mla+spilled-base index math, `#pragma opt_common_subs off` to stop cross-EBB base+off
 CSE, and pointer-deref virtual calls to block devirtualization.)
 
+## 6q. Register-web priority follows VARIABLE IDENTITY, not declaration/definition order (2026-07-13, Fable 0x400-0x800)
+
+When two callee-saved locals (e.g. one in r8, one in `sb`/r9) sit in a swapped
+coloring that survives BOTH declaration-order AND definition-order permutation, the
+lever is neither: swap **which variable name holds which value**. The allocator's web
+priority is keyed on the variable's identity across its whole live range, so moving the
+*value* into the other-named local (rather than reordering decls/defs) is what rotates
+the two colors. Cracked the r8/sb residual on func_ov006_020d6e8c after decl- and
+def-order permutation both failed. Try this once the cheap ordering knobs (6k/6p) are
+exhausted on a two-callee-saved swap.
+
+## 6r. `#pragma opt_propagation off` keeps a 0/1 ternary selector as a stack scalar (2026-07-13, Fable 0x400-0x800)
+
+A `sel = cond ? 1 : 0` (or `? a : b`) selector that the ROM keeps stack-resident and
+reads back with predicated `ldrge`/`ldrlt` gets copy-propagated away by default (mwccarm
+folds the constant into the consumer). `#pragma opt_propagation off` leaves the selector
+as a plain scalar in the spill area so the predicated reload survives. Pair with a
+`u32`-cast on the following loads to block CSE **without** volatile's slot-reload penalty.
+Cracked a stranded 40-div near-miss on `_ZN7Clipper13Func_020150E8ER7Vector35Fix12IiEPh`.
+
 ## 8. The `asm`-block escape hatch (for hand-written-asm SDK primitives)
 
 Some functions -- especially arm9 NITRO-SDK primitives -- are HAND-WRITTEN ASSEMBLY that NO C
