@@ -1,27 +1,23 @@
-// NONMATCHING: extra logic (you do more) (div=52). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
-extern void func_020731dc(short* a, void* b, void* node);
-extern char func_0203b98c[];
-
-extern short data_ov004_020bfe74[];
-extern short data_ov004_020bfe78[];
-extern short data_ov004_020bfe7c[];
-extern short data_ov004_020bfe80[];
-extern short data_ov004_020bfe84[];
-extern short data_ov004_020bfe88[];
-extern short data_ov004_020bfe8c[];
-extern short data_ov004_020bfe90[];
-extern short data_ov004_020bfe94[];
-extern short data_ov004_020bfe98[];
-extern short data_ov004_020bfe9c[];
-extern short data_ov004_020bfea0[];
-extern short data_ov004_020bfea4[];
-extern short data_ov004_020bfea8[];
-extern short data_ov004_020bfeac[];
-extern short data_ov004_020bfeb0[];
-extern short data_ov004_020bfeb4[];
-
+#pragma opt_common_subs off
+extern void func_020731dc(void *a, void *b, void *node);
+extern void func_0203b98c(void);
+extern int data_ov004_020bfe74;
+extern int data_ov004_020bfe78;
+extern int data_ov004_020bfe7c;
+extern int data_ov004_020bfe80;
+extern int data_ov004_020bfe84;
+extern int data_ov004_020bfe88;
+extern int data_ov004_020bfe8c;
+extern int data_ov004_020bfe90;
+extern int data_ov004_020bfe94;
+extern int data_ov004_020bfe98;
+extern int data_ov004_020bfe9c;
+extern int data_ov004_020bfea0;
+extern int data_ov004_020bfea4;
+extern int data_ov004_020bfea8;
+extern int data_ov004_020bfeac;
+extern int data_ov004_020bfeb0;
+extern int data_ov004_020bfeb4;
 extern char data_ov004_020bfe20[];
 extern char data_ov004_020bfdd8[];
 extern char data_ov004_020bfdcc[];
@@ -42,55 +38,57 @@ extern char data_ov004_020bfdfc[];
 
 void __sinit_ov004_020b9b24(void)
 {
-    data_ov004_020bfe74[0] = 0x20;
-    data_ov004_020bfe74[1] = 0x10;
-    func_020731dc(data_ov004_020bfe74, func_0203b98c, data_ov004_020bfe20);
-    data_ov004_020bfe78[0] = 0x20;
-    data_ov004_020bfe78[1] = 0x10;
-    func_020731dc(data_ov004_020bfe78, func_0203b98c, data_ov004_020bfdd8);
-    data_ov004_020bfe7c[0] = 0x18;
-    data_ov004_020bfe7c[1] = 0x10;
-    func_020731dc(data_ov004_020bfe7c, func_0203b98c, data_ov004_020bfdcc);
-    data_ov004_020bfe80[0] = 0x1c;
-    data_ov004_020bfe80[1] = 0x10;
-    func_020731dc(data_ov004_020bfe80, func_0203b98c, data_ov004_020bfde4);
-    data_ov004_020bfe84[0] = 0x1c;
-    data_ov004_020bfe84[1] = 0x10;
-    func_020731dc(data_ov004_020bfe84, func_0203b98c, data_ov004_020bfe68);
-    data_ov004_020bfe88[0] = 0x30;
-    data_ov004_020bfe88[1] = 0x10;
-    func_020731dc(data_ov004_020bfe88, func_0203b98c, data_ov004_020bfe50);
-    data_ov004_020bfe8c[0] = 0x18;
-    data_ov004_020bfe8c[1] = 0x10;
-    func_020731dc(data_ov004_020bfe8c, func_0203b98c, data_ov004_020bfe44);
-    data_ov004_020bfe90[0] = 0x30;
-    data_ov004_020bfe90[1] = 0x10;
-    func_020731dc(data_ov004_020bfe90, func_0203b98c, data_ov004_020bfe38);
-    data_ov004_020bfe94[0] = 0x30;
-    data_ov004_020bfe94[1] = 0x10;
-    func_020731dc(data_ov004_020bfe94, func_0203b98c, data_ov004_020bfe2c);
-    data_ov004_020bfe98[0] = 0x30;
-    data_ov004_020bfe98[1] = 0x10;
-    func_020731dc(data_ov004_020bfe98, func_0203b98c, data_ov004_020bfe14);
-    data_ov004_020bfe9c[0] = 0x3c;
-    data_ov004_020bfe9c[1] = 0x10;
-    func_020731dc(data_ov004_020bfe9c, func_0203b98c, data_ov004_020bfe08);
-    data_ov004_020bfea0[0] = 0x1c;
-    data_ov004_020bfea0[1] = 0x10;
-    func_020731dc(data_ov004_020bfea0, func_0203b98c, data_ov004_020bfdb4);
-    data_ov004_020bfea4[0] = 0x8;
-    data_ov004_020bfea4[1] = 0x10;
-    func_020731dc(data_ov004_020bfea4, func_0203b98c, data_ov004_020bfdf0);
-    data_ov004_020bfea8[0] = 0x8;
-    data_ov004_020bfea8[1] = 0x10;
-    func_020731dc(data_ov004_020bfea8, func_0203b98c, data_ov004_020bfda8);
-    data_ov004_020bfeac[0] = 0x18;
-    data_ov004_020bfeac[1] = 0x10;
-    func_020731dc(data_ov004_020bfeac, func_0203b98c, data_ov004_020bfe5c);
-    data_ov004_020bfeb0[0] = 0x28;
-    data_ov004_020bfeb0[1] = 0x10;
-    func_020731dc(data_ov004_020bfeb0, func_0203b98c, data_ov004_020bfdc0);
-    data_ov004_020bfeb4[0] = 0x20;
-    data_ov004_020bfeb4[1] = 0x10;
-    func_020731dc(data_ov004_020bfeb4, func_0203b98c, data_ov004_020bfdfc);
+  short *p;
+  p = (short *) (&data_ov004_020bfe74);
+  ((short *) (&data_ov004_020bfe74))[0] = 0x20;
+  ((short *) (&data_ov004_020bfe74))[1] = 0x10;
+  func_020731dc((short *) (&data_ov004_020bfe74), (void *) func_0203b98c, data_ov004_020bfe20);
+
+  p = (short *) (&data_ov004_020bfe78); p[0] = 0x20; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfdd8);
+  p = (short *) (&data_ov004_020bfe7c); p[0] = 0x18; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfdcc);
+  p = (short *) (&data_ov004_020bfe80); p[0] = 0x1c; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfde4);
+  p = (short *) (&data_ov004_020bfe84); p[0] = 0x1c; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfe68);
+
+  /* size before addr via temps, stores via inline addr expr */
+  {
+    int sz = 0x30;
+    int h = 0x10;
+    ((short *) (&data_ov004_020bfe88))[0] = (short)sz;
+    ((short *) (&data_ov004_020bfe88))[1] = (short)h;
+    func_020731dc((short *) (&data_ov004_020bfe88), (void *) func_0203b98c, data_ov004_020bfe50);
+  }
+
+  p = (short *) (&data_ov004_020bfe8c); p[0] = 0x18; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfe44);
+  p = (short *) (&data_ov004_020bfe90); p[0] = 0x30; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfe38);
+  p = (short *) (&data_ov004_020bfe94); p[0] = 0x30; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfe2c);
+  p = (short *) (&data_ov004_020bfe98); p[0] = 0x30; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfe14);
+
+  {
+    int sz = 0x3c;
+    int h = 0x10;
+    ((short *) (&data_ov004_020bfe9c))[0] = (short)sz;
+    ((short *) (&data_ov004_020bfe9c))[1] = (short)h;
+    func_020731dc((short *) (&data_ov004_020bfe9c), (void *) func_0203b98c, data_ov004_020bfe08);
+  }
+
+  p = (short *) (&data_ov004_020bfea0); p[0] = 0x1c; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfdb4);
+  p = (short *) (&data_ov004_020bfea4); p[0] = 0x8; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfdf0);
+  p = (short *) (&data_ov004_020bfea8); p[0] = 0x8; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfda8);
+  p = (short *) (&data_ov004_020bfeac); p[0] = 0x18; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfe5c);
+  p = (short *) (&data_ov004_020bfeb0); p[0] = 0x28; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfdc0);
+  p = (short *) (&data_ov004_020bfeb4); p[0] = 0x20; p[1] = 0x10;
+  func_020731dc(p, (void *) func_0203b98c, data_ov004_020bfdfc);
 }
