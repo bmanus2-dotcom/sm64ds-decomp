@@ -88,6 +88,19 @@ draft exists that is only a few instructions from byte-matching the retail ROM w
 Fix the remaining codegen SHAPE, not the semantics (unless the diff proves the draft's \
 semantics wrong).
 
+YOU ARE EDITING C SOURCE, NOT ASSEMBLY. The disassembly is the TARGET your C must compile to - do \
+NOT hunt for those instructions inside the draft (they are not there; they are what the C produces), \
+and NEVER write inline asm (it is not a valid match and will not compile with these flags). Each \
+diff line is "target vs yours"; often the two are the SAME VALUE by a different instruction (e.g. \
+smulbb by -1 vs rsb #0 both negate) - so change the C construct (per the levers below) to steer \
+mwccarm toward the target's shape, don't try to transcribe assembly.
+
+YOU ARE NOT THE COMPILER - do not try to predict whether your C becomes rsb or smulbb. This is a \
+GUESS-AND-CHECK loop: write your single best candidate, submit the code block, and the verifier \
+compiles it and hands you back the EXACT new diff to iterate from. Do NOT reason to certainty \
+first - one guess actually compiled beats ten argued in your head. End EVERY turn with a code \
+block; never spend a turn only speculating.
+
 COMPILER: mwccarm 1.2/sp2p3. Flags (C): -O4,p -enum int -lang c99 -char signed -interworking \
 -proc arm946e -gccext,on -msgstyle gcc
 If the draft starts with //cpp keep that exact first line (C++).
@@ -173,6 +186,12 @@ def _read_openai_stream(r, on_delta):
 
 def chat(messages, max_tokens=8000, retries=8, on_delta=None):
     think, mt = _thinking_for(max_tokens)
+    # Nemotron-3 (id "nemo" alias or "nemotron-*") reasons so heavily it burns its whole budget before
+    # emitting the code block. Its NVIDIA system toggle "detailed thinking off" roughly halves the
+    # thinking so it actually submits a candidate and uses the compile-check loop instead of truncating.
+    is_nemo = "nemo" in MODEL.lower()
+    if is_nemo and (not messages or messages[0].get("role") != "system"):
+        messages = [{"role": "system", "content": "detailed thinking off"}] + messages
     # Token streaming (OpenAI dialect only): when on_delta is given, read the SSE stream and echo each
     # delta as it arrives instead of waiting for the whole reply. Same tokens at the same rate, just
     # delivered incrementally. Anthropic-dialect callers ignore on_delta (they stay non-streaming).
@@ -184,10 +203,10 @@ def chat(messages, max_tokens=8000, retries=8, on_delta=None):
         # A reasoning model (deepseek-reasoner, nemotron) spends its hidden thinking INSIDE
         # max_tokens; at the default 8000 a hard function's reasoning starves/truncates the code
         # block ("no code block returned"). Give the known reasoners real headroom - they only bill
-        # what they use. (nemotron reasons heavily but its name lacks "reason", so name it explicitly.
-        # NOTE: this is still bounded by the server's loaded context window - LM Studio defaults
-        # Nemotron to 8192, too small for this; load it with a bigger --context to actually use this.)
-        if "reason" in MODEL.lower() or "nemotron" in MODEL.lower():
+        # what they use. (Match is_nemo, not "nemotron": the model loads under the "nemo" alias, which
+        # "nemotron" would miss. Still bounded by the server's loaded context window - load Nemotron
+        # with a bigger --context, e.g. 32768, or this headroom can't be used.)
+        if "reason" in MODEL.lower() or is_nemo:
             mt = max(mt, 24000)
         body = {"model": MODEL, "max_tokens": mt, "messages": messages}
         if stream:
