@@ -41,6 +41,17 @@ six straight PRs on the `_ZThn80_` thunks).
 someone has to discover and rip back out later. A near-miss is valuable — it is the
 highest-yield input to the refine tier — but its home is the DB, not `src/`.
 
+**Banking a near-miss** (do this instead of committing it to `src/`): write your draft
+to a one-line-per-entry seeds file `{"name": "<symbol>", "c_source": "<the C>"}` and run
+
+```
+python tools/nearmiss_db.py ingest --seeds my_seeds.jsonl --label <your-handle>
+```
+
+It recompiles each draft, keeps the closest, and records the divergence. The near-miss
+is now saved; do **not** also leave it in `src/`. A batch that is "12 matched + 3
+near-misses" is **12** `src/` files plus one DB ingest — never 15 `src/` files.
+
 ## Before you start: claim your span
 
 Two agents grinding the same function is wasted compute. Reserve your span in
@@ -61,6 +72,20 @@ See [`MERGE.md`](MERGE.md). In short: a maintainer (human or AI) merges once `va
 is green. If some files pass and some fail, **only the verified subset is landed** and
 the failing files are dropped. Make that unnecessary — only include files you have
 verified byte-match.
+
+### If `validate` fails with `near-miss` rows
+
+The bot's table marks each non-reproducing file. **Fix it yourself and re-push — don't
+leave it for a maintainer to salvage.** For every file marked `near-miss (does NOT
+reproduce the ROM)`:
+
+1. `git rm src/<that-file>` — remove it from `src/`.
+2. Bank it in the DB with the `nearmiss_db.py ingest` command above.
+3. Update your `CLAIMS.md` row to say "N matched; the rest banked in nearmiss/db.jsonl".
+4. Commit and re-push. `validate` re-runs; it goes green once `src/` holds only matches.
+
+Do not open the PR with near-misses in `src/` expecting the maintainer to split them out
+— that is the single most common reason a match PR stalls.
 
 ## Read before matching (not before PRing)
 
