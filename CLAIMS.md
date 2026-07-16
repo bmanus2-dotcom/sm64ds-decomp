@@ -19,12 +19,12 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
-| ov006 func_ov006_0211aed0 (0x0211aed0, size 0x90) | Codex | 2026-07-16 | active — free div=6 near-match refinement |
-| arm9 func_02058568 (0x02058568, size 0x64) | Codex/Lovelace | 2026-07-16 | active — free div=5 near-match refinement |
+| ov006 func_ov006_0211aed0 (0x0211aed0, size 0x90) | Codex | 2026-07-16 | released — DB-best div=6 confirmed three-register coloring floor; no tracked source change |
+| arm9 func_02058568 (0x02058568, size 0x64) | Codex/Lovelace | 2026-07-16 | released — DB-best div=5 confirmed hand-asm/context register floor; no tracked source change |
 | arm9 _ZN8CapEnemy11GetCapStateEv (0x02005fa0, size 0xb4) | Codex | 2026-07-16 | released — DB-best confirmed four-word scheduling floor; no tracked source change |
-| ov006 func_ov006_0211dad0 (0x0211dad0, size 0xac) | Codex/Raman | 2026-07-16 | active — free div=2 near-match refinement |
+| ov006 func_ov006_0211dad0 (0x0211dad0, size 0xac) | Codex/Raman | 2026-07-16 | released — DB-best raw div=3 confirmed literal-load scheduling floor; no tracked source change |
 | arm9 func_02068dc8 (0x02068dc8, size 0x7c) | Codex/Lovelace | 2026-07-16 | released — DB-best div=4 confirmed r3/r0 register-coloring floor; no tracked source change |
-| arm9 func_02058df4 (0x02058df4, size 0xac) | Codex/Mendel | 2026-07-16 | active — free div=4 near-match refinement |
+| arm9 func_02058df4 (0x02058df4, size 0xac) | Codex/Mendel | 2026-07-16 | done — NitroSDK arena-high function exact 172 bytes, linkcheck blind=0; PR #375 |
 | ov004 func_ov004_020ad878 (0x020ad878, size 0x40) | Codex/Lovelace | 2026-07-16 | released — existing src independently confirmed exact + linkcheck VERIFIED; no change needed |
 | ov005 func_ov005_020bfefc (0x020bfefc, size 0x50) | Codex/Mendel | 2026-07-16 | done — exact 80 bytes with canonical relocation targets, linkcheck blind=0; PR #374 |
 | ov007 func_ov007_020adb84 (0x020adb84, size 0x44) | Codex | 2026-07-16 | released — existing src independently confirmed exact + linkcheck VERIFIED; no change needed |
