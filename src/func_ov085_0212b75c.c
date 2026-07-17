@@ -1,7 +1,4 @@
 //cpp
-// NONMATCHING: extra logic (you do more) (div=9). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 struct Vector3 { int x, y, z; };
 
 extern "C" {
@@ -28,7 +25,7 @@ extern "C" int func_ov085_0212b75c(char *c)
   *(int *)(c + 0x41c) = 0;
   if (p)
   {
-    src = (struct Vector3 *)(p + 0x5c);
+    src = (struct Vector3 *)(((long long)(int)(p + 0x5c)) & 0xFFFFFFFFFFFFFFFFLL);
     v = *src;
     _ZN7PathPtrC1Ev(pathptr);
     _ZN7PathPtr6FromIDEj(pathptr, *(int *)(c + 0x438));
@@ -49,6 +46,6 @@ extern "C" int func_ov085_0212b75c(char *c)
       *(int *)(c + 0x44c) = -1;
   }
 
-  _ZN9ModelAnim7SetAnimEP8BCA_Filei5Fix12IiEj((void *)(c + 0x300), data_ov085_021305d0[1], 1, 0x1000, 0);
+  _ZN9ModelAnim7SetAnimEP8BCA_Filei5Fix12IiEj((void *)(c + 0x300), data_ov085_021305d0[1], 0, 0x1000, 0);
   return 1;
 }
