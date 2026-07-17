@@ -1,0 +1,34 @@
+typedef unsigned char u8;
+typedef short s16;
+typedef unsigned short u16;
+typedef int s32;
+typedef unsigned int u32;
+
+void func_ov063_02118914(char *c)
+{
+    int zero = 0;
+    u8 copied;
+    s32 scale;
+
+    *(u8 *)(c + 0x5cc) = 7;
+    *(u8 *)(c + 0x5c8) = zero;
+    copied = *(u8 *)(c + 0x5c8);
+    *(u8 *)(c + 0x5c9) = copied;
+    *(s32 *)(c + 0x584) = 0x1000;
+    *(u8 *)(c + 0x5ca) = 3;
+
+    scale = *(s32 *)(c + 0x584);
+    *(s32 *)(c + 0x80) = scale;
+    *(s32 *)(c + 0x84) = scale;
+    *(s32 *)(c + 0x88) = scale;
+    *(s32 *)(c + 0x188) = *(s32 *)(c + 0x590) * *(s32 *)(c + 0x584);
+    *(s32 *)(c + 0x18c) = *(s32 *)(c + 0x594) * *(s32 *)(c + 0x584);
+    *(u16 *)(((long long)(int)(c + 0x5d4)) & 0xFFFFFFFFFFFFFFFFLL) |= 8;
+    *(u32 *)(((long long)(int)(c + 0x19c)) & 0xFFFFFFFFFFFFFFFFLL) |= 1;
+    *(u16 *)(((long long)(int)(c + 0x5d4)) & 0xFFFFFFFFFFFFFFFFLL) |= 0x100;
+    *(s32 *)(c + 0x5c) = -*(s32 *)(c + 0x51c);
+    *(s16 *)(((long long)(int)(c + 0x8e)) & 0xFFFFFFFFFFFFFFFFLL) += 0x8000;
+    *(s16 *)(((long long)(int)(c + 0x94)) & 0xFFFFFFFFFFFFFFFFLL) += 0x8000;
+    *(u8 *)(c + 0x5ce) = zero;
+    *(u32 *)(((long long)(int)(c + 0xb0)) & 0xFFFFFFFFFFFFFFFFLL) &= ~2;
+}
