@@ -1034,6 +1034,139 @@ asm branches the middle correctly (div=2) but cannot do the `ldm{cond}` returns,
 the returns but predicates the middle -- a genuine double-bind. Best banked at div=2 in
 nearmiss/db.jsonl (`func_02068398`, source "natbree (double-guard predication floor)").
 
+The exact backend rule that causes this -- and the one construct that beats it -- is now
+characterized in 6u. Read that before spending any more time on `func_02068398`.
+
+## 6u. Backend cond-opt: the exact predicate-vs-branch rule (2026-07-16, Fable on func_02068398)
+
+6t left "mwccarm predicates the trailing 1-instr guard regardless of phrasing" as an empirical
+observation. The rule behind it, and why it is a true floor for a SINGLE-condition guard:
+
+**mwccarm's backend cond-opt refuses to predicate a block that has >= 2 CFG predecessors.**
+
+Everything else follows from that. Corollaries, each verified with minimal toys:
+- **Arm-size threshold**: an arm of 5 instructions predicates; 6 branches. (This is why 6t's
+  FIRST guard branches -- its 4-instr skip-body is over the fold budget -- while the trailing
+  1-instr `mov` collapses.)
+- **Other proven refusals**: a flag-setter in the arm, a call in the arm, a live loop structure.
+- **cond-opt runs on post-RA physical code.** Copy-chains, u64-launders and other IR-level
+  tricks have already collapsed by then, which is why every 6e/6h-family lever is inert here.
+- **No pragma reaches it.** The full pragma table was dumped from mwccarm.exe:
+  `opt_generateconditionalassignments` is IRO-level (`on` ICEs, `off` is inert),
+  `opt_optimizecontrolflow` / `opt_repositioncode` / `opt_rotateloops` / `defer_codegen` /
+  `late_fixes` and ~6 more are all inert on this. `-O1` DOES emit the unconverted branch, but
+  loses the predicated early-return and O2+ tail scheduling -- and no flag state mixes the two.
+  (CI flags are fixed anyway; only `//cpp` is a legal per-file directive.)
+- **asm barriers do not work**: `asm("")`, `asm volatile`, gcc-operand forms and MW `asm {}`
+  are lowered to IR, and cond-opt predicates them anyway (output byte-identical to plain C).
+
+**The one matched precedent, and why it is not available here.** A corpus scan of all of arm9
+for the ROM shape `cmp rX,#0; beq #8; <single mov>` finds exactly TWO sites: `func_02068398`
+and `func_0205c048` -- and c048 is MATCHED. Its source (src/func_0205c048.c) buys the branch
+with a genuinely 2-condition guard, giving the assignment block two predecessors:
+```c
+if (r8 != 0)      goto Lsep1;   /* pred 1: the goto      */
+if (spflag == 0)  goto Lskip1;
+Lsep1:  r8 = 1;                 /* pred 2: the fallthrough -> 2 preds -> BRANCH, not movne */
+Lskip1:
+```
+`func_02068398` has only ONE condition. Every way to manufacture a second predecessor costs an
+instruction mwccarm has no late pass to remove: it has **no cross-jumping** (duplicated tails
+stay duplicated), no branch-to-next elimination, and redundant `cmp`s survive peephole. Measured
+costs: c048-style double-goto = +8 bytes; redundant-inner-if = +4 (0x7c). Real `while`/`do-while`
+loops also block predication (a toy emits the exact `beq; mov r1,r0`), but any surviving loop
+needs a reachable, unfoldable backedge (+8 and a backward branch the ROM lacks); foldable ones
+(`while(0)`, unconditional break) dissolve in IRO pass 2
+(`IRO_CopyAndConstantPropagation -> EvaluateConditionals`) before cond-opt ever runs.
+
+**Verdict**: for a single-condition guard, the ROM's linear 1-predecessor `beq + mov` is
+UNREACHABLE from C under the canonical flags. `func_02068398` floors at div=1 (w-join draft).
+Do not re-attempt it at 1.2/sp2p3; it is permuter/asm territory, and per 6t the asm route cannot
+spell its `ldm{cond}` returns either. **When you see this shape, first ask whether the function
+has a second condition** -- if it does, the c048 construct matches it for free.
+
+## 6v. Four levers from the 2026-07-16 Fable batch (22 matches, arm9 + ov002/004/006/007)
+
+**`volatile` as a register-pair SELECTOR -- with a hard precondition.** A statement-level
+volatile init on ONE member of a closed scratch-register pair makes that temp take the HIGHER
+register of the pair, changing NO instruction:
+```c
+u16 tail = *(volatile u16 *)&r->tail;   /* ip<->lr or r1<->r2 pair: this web now takes the higher reg */
+```
+Took `func_0206ca7c` from div=4 to MATCH -- a function that otherwise read exactly like a 6k/6q
+coloring floor. **Precondition (this is the whole trick):** the web must have a MEMORY HOME.
+It works on a struct member; it does NOT work on a register-param copy or a purely computed
+temp, because there is no address to qualify. A refine pass applying it to 6 parked near-misses
+scored 0/6 for exactly this reason -- `func_0205d688` and `func_ov060_021184bc` are param-copy
+and computed-temp webs. Two further constraints, both cost real iterations:
+- **Expression-level volatile does not fire it.** Only a statement-level *init* does.
+- **Volatile loads schedule ASAP**, so this can introduce a load-ORDER swap while fixing the
+  register swap. That is a real trade, not a bug: it left `func_ov007_020c6550` deadlocked at
+  div=2 (right registers, wrong load order; every phrasing restoring load order flips the pair
+  back). Try both-volatile, or pin the other load earlier with a data dependency.
+It also defeats mwccarm's aggressive copy-elision when you need a dead store materialized
+(`*(volatile s32*)&v.y = yv;` -- load-bearing on `func_ov002_020ea90c`).
+
+**Launder the FULL address, not just the base, to control CSE.** 6h covers laundering a pooled
+global's address. Refinement: laundering `base + off` as one expression CSE-MERGES two uses of
+that address; laundering only the base keeps them DISTINCT. Pick deliberately:
+```c
+*(int *)((char *)(((int)o + 0x46b0) & 0xFFFFFFFFFFFFFFFF) + off)   /* merged -> ROM's [r0,r5] form */
+```
+Cracked `func_ov006_0210446c`. Caveat found while failing `func_ov006_020dbe9c`: a laundered
+named global always outranks a plain local in allocation order, so the launder can re-color
+correctly-but-wrongly (pool jumps AHEAD of the index). That was the wall there (div=21).
+
+**Naming an invariant fixes its COLOR; leaving it unnamed fixes its LICM ORDER.** Two separate
+knobs on the same loop:
+- named loop-invariants -> you control which register each lands in;
+- unnamed -> LICM hoists them in first-use order, matching the ROM's preheader interleave.
+`func_ov006_0212a2e0` matched by naming only `mask` and leaving table/seed/base unnamed.
+`func_ov006_020fc8c0` is the counter-example and a clean statement of a floor: named gets the
+colors but the wrong preheader order, unnamed gets the order but the wrong colors, and ~40
+variants could not get both (div=39).
+
+**Equal-arm ternary moves an argument's setup later.** `f(..., guard ? e : e, ...)` -- the guard
+folds away and emits nothing, but the arg's setup cluster moves to the ROM's slot. Moved an
+emission cluster 5 slots (div 24 -> 14) and was load-bearing on `func_ov006_02115a5c`. Related:
+an **explicit reload of a named count after a call** reproduces mwccarm's entry-throwaway-base
++ LICM'd-reload-base split.
+
+## 9. Prebuilt-library TUs: the ROM contains objects the canonical compiler never built
+
+Distinct from every floor above. These are not "C we cannot spell" -- they are translation units
+that were **not compiled by mwccarm 1.2 at all**, so no source and no lever can reach them. The
+tell is that a whole TU's frame/staging idiom is absent from the entire 1.2-matched corpus while
+being exactly what a DIFFERENT mwccarm version emits. Recognize and skip; do not grind, and do
+not asm-hatch (these are compiled code, not hand-asm, so section 8 does not apply).
+
+**Confirmed instances (2026-07-16):**
+- **MSL `__pformatter`** (`func_0206e4a4`, arm9, 0x83c). Passes a 16-byte `print_format` struct
+  by value staged BELOW `sp` with no sp adjustment and no frame pointer
+  (`add r0,sp,#0x34; sub r5,sp,#8; ldm r0,{r0-r3}; stm r5,{r0-r3}`). Every mwccarm 1.2
+  (base/sp2/sp2p3/sp3/sp4 x ~75 flag combos, C and C++) instead emits
+  `sub ip,sp,#8; mov sp,ip; ... add sp,ip,#8`, which pins `mov fp,sp`, steals fp (the ROM keeps
+  `' '` there) and grows the frame 0x244 -> 0x24c, shifting every stack offset -- a 999-word
+  cascade from one lowering at 4 call sites. mwccarm **2.0/dsi** emit the ROM's exact no-bump
+  form. Decisive: the matched siblings in the same TU (`func_0206fb08`/`fd6c`/`f820`) byte-match
+  ONLY under 1.2/sp2p3. Cross-check: pret/pokediamond's Nintendo-built `__pformatter`
+  (arm9/asm/MSL_Common_printf.s) shows the identical no-bump pattern and is still unmatched .s
+  there after years.
+- **The 4 `ActorBase::Process` PTMF wrappers** (`func_0204322c`, `func_02043288`, `func_0204335c`,
+  `func_020432e4`). Pass three 8-byte pointer-to-member constants by value; arg 2 spans r3/[sp].
+  mwccarm 1.2 emits `push {fp,lr}; mov fp,sp; mov sp,ip; add sp,ip,#4` (fp frame + dynamic sp)
+  from EVERY source form (C structs, C++ PTMF constants, real member call, union, nested struct,
+  char/short arrays, u64-struct, K&R, variadic, local copies, all opt pragmas). The ROM's
+  fixed-frame staging (`stmdb {lr}; sub sp,#0xc; ... sub ip,sp,#4; str; str; ldm ip,{r3}`, no sp
+  moves) is what **2.0** emits -- 2.0 + `-proc arm7tdmi` reaches 1 word (`ldr r3,[ip]` vs
+  `ldm ip,{r3}`). These 4 are the ONLY occurrences of this staging idiom in the whole ROM
+  (arm9 + all overlays scanned); nothing in the 1.2-matched corpus produces it.
+
+**Rule**: before a long grind on a big library-looking function, check whether its TU-mates
+match at 1.2 and whether the divergent idiom appears ANYWHERE in the matched corpus. If the
+idiom is unique to that TU and a different mwccarm version reproduces it, stop -- it is a
+prebuilt object, and the div count is not a measure of how close you are.
+
 ---
 
 *Add to this file whenever you learn a new codegen rule. It is the project's accumulating

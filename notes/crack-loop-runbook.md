@@ -255,3 +255,59 @@ Misses parked in nonmatching.jsonl are the codegen floor: base-materialization R
 instruction-ordering / scheduling, and value-numbering CSE residues. Documented unreachable
 from C across compiler versions and the permuter. See [[sm64ds-materialization]],
 [[sm64ds-ordering-floor]]. Route these to hand-fix, never the permuter.
+
+## Two silent traps (both cost a session's worth of tokens on 2026-07-16)
+
+**1. `disasm`'s default base is wrong for every module.** The tool defaults to `0x02000000`.
+The real bases:
+
+| module | load base | derive it |
+|---|---|---|
+| arm9 | **0x02004000** | `extracted/arm9_dec.bin` |
+| ov006 | **0x020bfec0** | `extracted/overlays/overlay_0006.bin` |
+| any overlay | that overlay's **lowest symbol address** | its first function sits at file offset 0 |
+
+```
+disasm {"binary":"extracted/arm9_dec.bin","base":"0x02004000","offset":"<vaddr - 0x02004000>"}
+```
+Why this is dangerous rather than merely wrong: with a bad base every function disassembles
+0x4000 bytes from its symbol and reads as the MIDDLE of a basic block -- conditional first
+instruction, sp-relative loads, no prologue -- while branch/bl targets stay perfectly
+SELF-CONSISTENT (they are pc-relative, so a base shift moves them too). Nothing contradicts
+you, and the natural conclusion is "the symbol table is wrong / this isn't a function." It is.
+Sanity check: **a correct base makes every function entry start with `push {...}`**. To
+re-derive a base, take a known-matched function, get its true bytes from `match`, byte-scan the
+image for them and subtract (e.g. AddVec3 @ 0x02053884 lands at file offset 0x4f884 -> 0x02004000).
+`match`/`fdiff`/`falign` resolve the base themselves from `module:` -- the trap is `disasm` only.
+
+**2. `cluster_targets` / `worklist` silently serve ALREADY-MATCHED functions on a fresh clone.**
+`cluster_targets.py:load_matched()` reads `progress/matched.jsonl` -- but `progress/` is
+gitignored (see the Commit note above), so a fresh clone has no ledger, `load_matched()` returns
+an EMPTY set, and the tool believes nothing is matched. It then prints a plausible
+`candidates: 2445` and a nicely-scored list of functions that are already in `src/`. On
+2026-07-16 a 16-target batch came back 16/16 "already matched", burning two agents.
+- **Detect**: `wc -l progress/matched.jsonl` (missing = the bug), or spot-check a target with
+  `git ls-files src/<symbol>.c`.
+- **Work around** (read-only, no ledger write): derive unmatched from `src/` directly -- a
+  symbol is matched iff `src/<symbol>.c|.cpp` exists (AGENTS.md: the filename IS the symbol).
+  Subtract that set from `kind:function(arm,...)` in the config symbol tables.
+- **Real numbers on 2026-07-16** once computed that way: arm9 10,664 matched / 146 unmatched
+  (~98.5%), all-module unmatched 641 -- concentrated in ov006 (218), arm9 (146), ov002 (108),
+  ov007 (59). Anything claiming thousands of arm9 candidates is reading an absent ledger.
+- **Fix worth making**: have `load_matched()` fall back to scanning `src/` when the ledger is
+  absent, rather than returning an empty set.
+
+## Claim before you spawn, not after
+
+`claims_check` is read-only and needs NO api key -- there is no excuse to skip it. On 2026-07-16
+two agents were spawned onto spans another contributor (`bmanus2-dotcom`, "glm-5.2 sweep") had
+already locked, and two of that session's near-misses (`func_0204af3c`, `func_0205fb58`) were
+being ground on while held by `lunavyqo`. The board is genuinely crowded.
+```
+claims_check {"module":"ov006","start":"0x...","end":"0x..."}   # needs start+end despite the schema
+claims_lock  {"module":"ov006","start":"0x...","end":"0x...","note":"func_..."}
+claims_release {"id":"clm_..."}
+```
+Lock **one tight span per function**, not a broad range, so you don't block neighbours. Claims
+auto-expire in 24h. `claims_lock` posts under your handle using the console's stored
+`CLAIMS_API_KEY` -- the key never passes through the agent, so never paste one into a prompt.
