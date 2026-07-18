@@ -1,11 +1,4 @@
-// NONMATCHING: ang*-1 emits rsb; ROM has smulbb (16x16 signed mul). div=1
-/* func_ov063_0211640c at 0x0211640c (ov063), size 0x2a0
- * Compiler mwccarm 1.2/sp2p3, flags:
- * -O4,p -enum int -lang c99 -char signed -interworking -proc arm946e -gccext,on -msgstyle gcc
- * One divergence at 0x5c: `ang = ang * -1` compiles to `rsb r0,r4,#0`;
- * the ROM keeps the 16-bit `smulbb r0,r4,r0`. mwccarm folds *-1 to a
- * negate; only global `#pragma opt_propagation off` yields smulbb but it
- * then perturbs a second negate block (net div=3). Closest clean form kept. */
+#pragma opt_propagation off
 typedef int s32;
 typedef unsigned int u32;
 typedef unsigned short u16;
@@ -42,8 +35,9 @@ void func_ov063_0211640c(char *c)
 
     if ((u32)(*(u16 *)(c + 0x5d4) << 0x17) >> 0x1f) {
         s16 neg = -1;
-        pos.x = pos.x * neg;
-        ang = ang * neg;
+        s16 a = ang;
+        pos.x = pos.x * (int)neg;
+        ang = (s16)(a * neg);
     }
 
     if (*(u8 *)(c + 0x5cc) == 3) {
@@ -75,8 +69,9 @@ void func_ov063_0211640c(char *c)
             c, c + 0x434, c + 0x4a4, 0x12c000, 0xc8000, 0xf);
 
         if ((u32)(*(u16 *)(c + 0x5d4) << 0x17) >> 0x1f) {
+            int px = pos.x;
             int neg = -1;
-            pos.x = pos.x * neg;
+            pos.x = px * neg;
             Matrix4x3_FromTranslation(&data_020a0e68,
                 pos.x >> 3, pos.y >> 3, pos.z >> 3);
             *(struct Matrix4x3 *)(c + 0x4d4) = data_020a0e68;
