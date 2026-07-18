@@ -1,0 +1,92 @@
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef short s16;
+typedef int s32;
+typedef unsigned int u32;
+typedef long long s64;
+
+extern short data_02082214[];
+extern int data_ov002_021000e0[];
+extern int data_ov002_021000f0[];
+extern int func_ov002_020f5a94(void *c);
+
+void func_ov002_020f4d70(char *c, int i)
+{
+    int off = i * 0x4c;
+
+    if (*(u16*)(c + 0x3a + off) == 0) {
+        if (*(u16*)(c + 0x32 + off) == 0)
+            (*(u16*)(c + 0x3c + off))++;
+    }
+
+    if (*(u8*)(c + 0x48 + off) == 0) {
+        int idx;
+
+        idx = *(unsigned short*)(c + 0x2e + off) >> 4;
+        {
+            short tv = data_02082214[idx * 2 + 1];
+            int spd = *(int*)(c + 0x10 + off);
+            *(int*)(c + 0 + off) = (int)(((long long)tv * spd + 0x800) >> 12) + 0x80000;
+        }
+
+        idx = *(unsigned short*)(c + 0x2e + off) >> 4;
+        {
+            short tv = data_02082214[idx * 2];
+            int spd = *(int*)(c + 0x10 + off);
+            *(int*)(c + 4 + off) = (int)(((long long)tv * spd + 0x800) >> 12) + 0x60000;
+        }
+
+        *(u16*)(c + 0x2e + off) += *(u16*)(c + 0x42 + off);
+        *(s32*)(c + 0x24 + off) += *(u16*)(c + 0x42 + off);
+
+        if (*(u8*)(c + 0x48) != 0) {
+            *(u16*)(c + 0x42 + off) += 8;
+        } else {
+            if (*(u16*)(c + 0x42 + off) < 0x200) {
+                *(u16*)(c + 0x42 + off) += 6;
+                if (*(u16*)(c + 0x42 + off) > 0x200)
+                    *(u16*)(c + 0x42 + off) = 0x200;
+            }
+        }
+
+        if ((u32)*(s32*)(c + 0x24 + off) < (u32)data_ov002_021000e0[i])
+            return;
+
+        if (*(u8*)(c + 0x514) != 0)
+            return;
+
+        (*(u8*)(c + 0x48 + off))++;
+        *(u16*)(c + 0x36 + off) = 0;
+        *(s32*)(c + 8 + off) = -0x2000;
+        return;
+    }
+
+    (*(u16*)(c + 0x36 + off))++;
+    *(s32*)(c + 0 + off) += *(s32*)(c + 8 + off);
+    *(s32*)(c + 8 + off) -= 0x300;
+
+    if (*(u16*)(c + 0x36) < 0x70)
+        return;
+
+    {
+        int o2 = (unsigned)i * 0x4c;
+        (*(u8*)(c + 0x47 + o2))++;
+        *(s32*)(c + 0x10 + o2) = 0x38000;
+        *(u16*)(c + 0x2e + o2) = 0x8000;
+        *(u8*)(c + 0x48 + off) = 0;
+        *(u16*)(c + 0x3c + o2) = 0;
+        *(u16*)(c + 0x30 + o2) = data_ov002_021000f0[i] << 6;
+
+        if (func_ov002_020f5a94(c) == 3) {
+            if (i == 2)
+                *(u16*)(c + 0x30 + o2) = 0x40;
+        }
+    }
+
+    *(s32*)(c + 0 + off) = 0x110000;
+    *(s32*)(c + 4 + off) = 0;
+    *(u16*)(c + 0x42 + off) = 0x100;
+    *(s32*)(c + 8 + off) = 0x5800;
+    *(s32*)(c + 0x1c + off) = 0x80000;
+    *(s32*)(c + 0x20 + off) = 0x28000;
+}
