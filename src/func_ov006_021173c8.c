@@ -1,10 +1,18 @@
 //cpp
-// NONMATCHING: 21/1072 words differ (div=21), all mwccarm spill-slot/coloring internals.
-// Residual = stack-slot allocation order the compiler picks non-deterministically: loop C's
-// val/pcnt land at sp+0x10/0x2c instead of 0x10/0x14 (cascading a 4-byte shift onto the
-// hoisted tag slots 0x20-0x3c); loop G's pcnt2 coalesces into val's slot (0x14) instead of
-// getting its own 0x1c; loop 2's digit-count reload uses split add-#0x4000 addressing instead
-// of the pooled register-offset ldr [r1,r0]. All logic/structure/addressing otherwise exact.
+// NONMATCHING: 18/1072 words differ (div=18), all mwccarm spill-SLOT ORDERING internals.
+// Loop 2's digit-count reload (was the 3-word split add-#0x4000 cluster) is FIXED: the
+// inner-placement u64 launder ((int)g + sb*4 + 0x478c) & 0xFFFFFFFFFFFFFFFFLL forces the
+// pooled-constant register-offset form ldr r2,[r1,r0] the ROM has. Remaining 18 words are
+// ONE web mis-sorted in the spill-slot allocator: loop C's pcnt should take sp+0x10 (before
+// val at 0x14, tags at 0x20-0x3c) but lands at 0x2c wedged among the hoisted tag constants,
+// shifting z1/t0/t1/t2 down 4 bytes and loop G's pcnt2 from 0x1c to 0x14. Slot ORDER proved
+// invariant under ~35 lever attempts: decl/assignment order+scope (block/outer/function),
+// launder spelling (inner/outer/unsigned/~0LL), identity merge/rename, subscript/int-addr/
+// block-temp/volatile/register forms, dead extra defs, named-vs-literal tag constants,
+// opt_lifetimes/dead_assignments/loop_invariants/unroll_loops pragmas (same or worse).
+// decomp-permuter cannot attack this class: its scorer normalizes sp offsets (scores 0).
+// Note: loop C literal constants and a C99 fn-ptr vtable emulation both compile to the
+// IDENTICAL bytes as the named-tag //cpp virtual version (frontend-invariant residual).
 // func_ov006_021173c8 @ 0x021173c8 size 0x10c0 (ov006), mwccarm 1.2/sp2p3.
 
 #pragma opt_common_subs off
@@ -77,27 +85,23 @@ extern "C" int func_ov006_021173c8(void *this_)
         }
 
         /* Loop C: rows 1..4 */
-        {
-        int t0 = 0x30, t1 = 0x80, t2 = 0x90, t3 = 0xa0, t4 = 0xe0;
-        int one = 1, neg = -1;
         limit = col * 0x14;
         for (r7 = 0; r7 < 4; r7++) {
             if (I(0x5960) >= limit && *(int *)(g + r7 * 4 + 0x5968) > 0) {
                 int val;
                 int *pcnt;
-                func_ov004_020afdd0(data_ov006_02138ae0[r7 + 1], t0, xpos, neg, neg);
+                func_ov004_020afdd0(data_ov006_02138ae0[r7 + 1], 0x30, xpos, -1, -1);
                 val = data_ov006_0212edfc[r7];
-                func_ov004_020b1ea4(t1, xpos, val, 0, 0, one, 0);
+                func_ov004_020b1ea4(0x80, xpos, val, 0, 0, 1, 0);
                 i = func_ov004_020ad674();
-                func_ov004_020afdd0(*(int *)(data_ov006_0213ecb8[i] + 0x54), t2, xpos, neg, neg);
+                func_ov004_020afdd0(*(int *)(data_ov006_0213ecb8[i] + 0x54), 0x90, xpos, -1, -1);
                 pcnt = (int *)(((long long)(int)(g + r7 * 4 + 0x5968)) & 0xFFFFFFFFFFFFFFFFLL);
-                func_ov004_020b1ea4(t3, xpos, *pcnt, 0, 0, 0, 0);
-                func_ov004_020b1ea4(t4, xpos, val * *pcnt, 0, 0, one, 0);
+                func_ov004_020b1ea4(0xa0, xpos, *pcnt, 0, 0, 0, 0);
+                func_ov004_020b1ea4(0xe0, xpos, val * *pcnt, 0, 0, 1, 0);
                 xpos += 0x18;
                 limit += 0x14;
                 col++;
             }
-        }
         }
 
         /* Block D */
@@ -244,7 +248,7 @@ extern "C" int func_ov006_021173c8(void *this_)
                     int *px = LP(g + sb * 8 + 0x47c8);
                     func_ov004_020b1ea4((*px >> 12) - 0x10, *py >> 12, cnt, -1, 0, 0, 0);
                     nd = 0;
-                    u = (unsigned int)*(int *)(g + sb * 4 + 0x478c);
+                    u = (unsigned int)*(int *)(((int)g + sb * 4 + 0x478c) & 0xFFFFFFFFFFFFFFFFLL);
                     if (u != 0) {
                         do {
                             u /= 10;

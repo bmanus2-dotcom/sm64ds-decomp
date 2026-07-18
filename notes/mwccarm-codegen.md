@@ -1132,6 +1132,36 @@ emission cluster 5 slots (div 24 -> 14) and was load-bearing on `func_ov006_0211
 an **explicit reload of a named count after a call** reproduces mwccarm's entry-throwaway-base
 + LICM'd-reload-base split.
 
+## 6w. Inner-placement launder forces pooled-constant REGISTER-OFFSET loads; spill-slot ORDER is a real floor (2026-07-18, func_ov006_021173c8)
+
+Two results from grinding the last 21 words of the 0x10c0 HUD results-screen draw:
+
+- **A >4KB struct-offset reload wanting `ldr r0,[pc]=<off>; add r1,base,idx,lsl#2;
+  ldr r2,[r1,r0]` (pooled constant as a REGISTER offset) comes from the INNER-placement
+  u64 mask on the deref address**: `*(int *)(((int)g + i * 4 + 0x478c) &
+  0xFFFFFFFFFFFFFFFFLL)`. The plain deref always splits (`add #0x4000` + `ldr #0x78c`);
+  the OUTER-placement launder (mask around the completed `(long long)(int)(...)`) instead
+  materializes the full address as a value (`add rX,r1,r0` + spill/reload) - that is the
+  6g shape, NOT this one. Pick placement by what the target shows: register-offset ldr =
+  inner, materialized+spilled address = outer. (Cracked the loop-2 digit-count reload,
+  21->18 words.)
+- **Spill-slot ASSIGNMENT ORDER is source-invariant - a true floor class.** When falign
+  shows only `[sp,#K]` offsets differing (same instructions, same counts) because one web
+  sorted into a different position of the slot list, no C lever reaches it: swept ~35
+  variants (decl/assignment order and scope incl. function-top, launder spellings
+  inner/outer/unsigned/~0LL, identity merge/rename across loops, subscript/int-address/
+  block-temp/volatile/register forms, dead extra defs, named-vs-literal hoisted constants,
+  opt_lifetimes / opt_dead_assignments / opt_loop_invariants / opt_unroll_loops) - every
+  one was byte-identical-inert on the slot order or strictly worse elsewhere. The
+  decomp-permuter CANNOT attack this class either: its scorer normalizes sp-relative
+  offsets and reports score 0 on an 18-word slot-order diff. Park these as
+  floor(slot-order) instead of burning refine tokens.
+- Bonus datum: on this function the C99 function-pointer vtable emulation
+  `(*(void (***)(void *))(p))[1](p)` compiles BYTE-IDENTICAL to the //cpp virtual call
+  (including prologue and dispatch loops), and literal in-loop constants compile identical
+  to named hoisted-tag locals - the 6e "never emulate a vtable call in C" rule is
+  shape-specific, not universal.
+
 ## 9. Prebuilt-library TUs: the ROM contains objects the canonical compiler never built
 
 Distinct from every floor above. These are not "C we cannot spell" -- they are translation units
