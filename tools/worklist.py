@@ -69,6 +69,12 @@ def read_src_text(name):
     return None
 
 
+def target_is_done(done, label, addr, name):
+    """Treat the source tree as authoritative when the generated ledger lags."""
+    return ((label, addr) in done
+            or any((REPO_SRC / f"{name}.{ext}").exists() for ext in ("c", "cpp")))
+
+
 def callee_set(addr, ins, relocs, syms):
     """Frozenset of resolved bl/blx callee names for a function."""
     out = set()
@@ -204,7 +210,8 @@ def main():
                 continue
             label = "arm9" if mod["name"] == "main" else mod["name"]
             for name, addr, size in sweep.funcs(mod):
-                if (label, addr) in done or not (args.min <= size <= args.max):
+                if (target_is_done(done, label, addr, name)
+                        or not (args.min <= size <= args.max)):
                     continue
                 d = DM.demangle(name)
                 if d and d["class"]:
@@ -290,7 +297,8 @@ def main():
             label = "arm9" if mod["name"] == "main" else mod["name"]
             data = mod["bin"].read_bytes()
             for name, addr, size in sweep.funcs(mod):
-                if (label, addr) in done or not (args.min <= size <= args.max):
+                if (target_is_done(done, label, addr, name)
+                        or not (args.min <= size <= args.max)):
                     continue
                 cands.append((label, name, addr, size, mod, data))
         random.shuffle(cands)
@@ -322,9 +330,10 @@ def main():
             if args.addr is not None and addr != args.addr:
                 continue
             # An exact --addr means the caller wants THAT function - a hand-picked drive target -
-            # even if it's already matched or parked as nonmatching. Only apply the done-set
-            # exclusion in list/scheduling mode (no --addr), so batch generation still skips them.
-            if (args.addr is None and (label, addr) in done) or not (args.min <= size <= args.max):
+            # even if it's already matched or parked as nonmatching. Only apply the completed-
+            # target exclusion in list/scheduling mode, so batch generation still skips them.
+            if ((args.addr is None and target_is_done(done, label, addr, name))
+                    or not (args.min <= size <= args.max)):
                 continue
             tgt = data[addr - mod["base"]:addr - mod["base"] + size]
             rec = build_rec(label, name, addr, size, tgt, relocs)

@@ -5,3 +5,11 @@
 *.py text eol=lf
 *.md text eol=lf
 *.jsonl text eol=lf -diff
+
+# Append-only attempt/provenance logs (tangOS match-conventions): union-merge so two contributors
+# appending concurrently keep BOTH sides' rows instead of hitting a conflict. Every row is a unique
+# attemptId, so keeping both is always correct. (merge=union is git's built-in append driver - no
+# custom script needed.) nearmiss/db.jsonl is deliberately NOT here: its tip C is rewritten, not
+# appended, so union-merging it would keep stale tips.
+config/match_attempts.jsonl merge=union
+config/match_provenance.jsonl merge=union
