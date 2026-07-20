@@ -1154,6 +1154,75 @@ earlier "explicit reload of a named count" / explicit-counter finding above -- s
 multiplicative induction plus a spill, probe BOTH counter shapes (explicit scalar vs derived
 expression); one of them frees the spilled register.
 
+## 6x. Expression-TREE order is a coloring knob; and two standing claims corrected (2026-07-19, `_ZN7Minimap8BehaviorEv`)
+
+Landed `_ZN7Minimap8BehaviorEv` (ov002 @ 0x020fa690, 0xcfc -- 3324 bytes, one of the larger
+behavior functions) from 659 div -> 0. Three parallel Opus attempts converged at 21 / 17 / 53 with
+*disjoint* residuals; merging them closed it. Four levers did the last stretch:
+
+**1. Operand order and PARENTHESISATION inside a single `|` chain rotate registers.** The 6e rule
+"first-demanded value gets the highest free register" applies to demand order in the *expression
+tree*, not merely statement order. At a hardware-register write the ROM wanted
+`((0x1f - id) << 8) | ((*reg & 0x43) | 0x4010)` -- shift term first, AND/OR grouped in its own
+parens. The left-associated spelling with the same textual operand order
+(`((0x1f - id) << 8) | 0x4010 | (*reg & 0x43)`) is a *different tree* and colors differently.
+Worth 9 divergences in one arm and 5 more in the second. When a residual is a whole-block register
+rotation around a computed value, re-associate the expression before declaring a floor.
+
+**2. Spell an or-accumulator as signed `int` and cast at each test.** `int orv = a|b|c;` then
+`if ((u8)orv)` ... `if (!(u8)orv)` reproduces `ands rDst,rSrc,#0xff` (result to a scratch register,
+accumulator *preserved* in its own) and the re-emitted `ands` at the second test. `u32 orv` with
+`orv & 0xff` lets mwcc range-analyse the u8-derived value and collapse it to `cmp rX,#0`. Resisted
+volatile, u64 laundering, temps, and s8 typing -- the signed-int-plus-cast spelling is the lever.
+
+**3. Vtable shape decides the vptr's register.** A `struct Vtbl { s32 (*f[8])(void *); }` with
+`f[5](obj)` (array of function pointers, 1-arg) holds the vptr in r2; the named-slot struct with a
+2-arg signature put it in r3. Companion to the 5-C `//cpp` dummy-vtable dispatch note.
+
+**4. Pool-slot order = first-reference order.** A lone swapped pool *offset* far from the prologue
+is a PROLOGUE STATEMENT-ORDER symptom, not a local problem. Swapping two prologue assignments
+(`cam = data_0209f318;` / `player = data_0209f394[...]`) fixed both the prologue emission order and
+a downstream pool-offset diff ~0x7d0 away -- 8 divergences from a two-line move. Chase distant pool
+offsets to the prologue first.
+
+### Two standing claims corrected
+
+- **`#pragma opt_common_subs off` is NOT a default for LARGE global-heavy functions.** 6e presents
+  it as the master lever on LARGE bodies; here it actively HURT (shape 0.9284 -> 0.9220 on one
+  attempt, 152 -> 200 difflines on another, independently reproduced). This ROM does *global* CSE on
+  the repeated pool loads. The pragma is compatible with a named-local manual-CSE style (one
+  attempt rode it 659 -> 21), so both routes converge -- but it is a probe, not a prior. Try the
+  function BOTH ways before committing to a style.
+- **The 0x218 / 0x21c / 0x254 read-modify-write shapes are NOT the 6g base-materialization floor.**
+  They are crackable by the u64-address launder, with one strict condition: **the launder must be on
+  the LVALUE EXPRESSION ITSELF.** `*(s32 *)(((int)self + 0x218) & 0xFFFFFFFFFFFFFFFFLL) -= 9` yields
+  the ROM's `add rX,base,#OFF / ldr / str`. A plain `self->f218 -= 9`, a local `s32 *p = &self->f218`,
+  a laundered *pointer local*, and a C++ `operator-=` wrapper ALL fold back to `ldr [sl,#0x218]`.
+  Same idiom fixed a `+= 0x40` angle field, a `-=` on a u8 counter (which also stopped mwcc
+  if-converting the enclosing block), and `&obj->pos` in an aggregate copy (that one corrected the
+  frame size by exactly one word). Re-audit anything parked under 6g on this shape.
+
+**Inert or harmful here:** fresh-per-loop counters (6p -- this ROM REUSES one counter across four
+sequential loops; forcing fresh ones cost 34 divergences), declaration-order permutation (6q -- all
+120 orderings of the 5 scalar locals scored identically), hoisting a table pointer/length into
+locals, `volatile`, and s8 typing on the or-accumulator.
+
+### Tooling traps hit on this function
+
+- `tools/match.py` defaults to arm9 and silently reports `target 0x0` for an overlay function --
+  a *zero target scores as garbage, not as an error*. All three agents burned effort scoring
+  against nothing before passing
+  `--bin extracted/dsd/arm9_overlays/ov002.bin --base 0x020ad660 --module ov002`. Always confirm
+  the target is non-zero before trusting a divergence count.
+  (The ov002 base is `0x020AD660` = `base_address: 34264672` in
+  `extracted/dsd/arm9_overlays/overlays.yaml`, which is CORRECT -- an agent reported the yaml as
+  wrong with a bogus `0x20AE2E0`; that claim was false and is recorded here so it is not repeated.)
+- `tools/abrow.py` does not know this function (`NO_SUCH_FUNC`), and `tools/disasm.py --base X
+  --offset Y` double-counts the offset in BRANCH TARGETS (subtract the offset from any `bl`/`b`
+  destination it prints; instruction addresses are fine).
+- The authoritative callee list for an overlay function is `config/arm9/overlays/<ov>/relocs.txt`,
+  not guesswork from the disassembly annotations.
+
 ## 9. Prebuilt-library TUs: the ROM contains objects the canonical compiler never built
 
 Distinct from every floor above. These are not "C we cannot spell" -- they are translation units
