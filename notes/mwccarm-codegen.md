@@ -1154,6 +1154,61 @@ earlier "explicit reload of a named count" / explicit-counter finding above -- s
 multiplicative induction plus a spill, probe BOTH counter shapes (explicit scalar vs derived
 expression); one of them frees the spilled register.
 
+## 6y. Three levers for steering a callee-saved register WEB (2026-07-20, arm9 tail, Fable refine)
+
+From closing `_ZN3OAM6RenderEbP7OamAttriiii5Fix12IiES3_ii` (67 -> 2) and
+`_ZN12WithMeshClsn20UpdateExtraContinousEv` (246 -> 5). The recurring shape: a source form
+that fixes the SCHEDULE simultaneously rotates two callee-saved registers, so the fix and the
+regression are welded together (every "fixes +0x11c, costs 41" attempt). These three levers
+break that weld by moving one value's web rank without touching the schedule.
+
+**1. Zero-instruction priority booster: a fake self-select on a call result.**
+`h = GetObjHeight(...); h = w ? h : h;` emits NO instructions but adds a USE to h's web,
+raising its allocator priority above a competitor's. This is what let `h` retake r4 so `y`
+could keep r5 while the schedule stayed correct. Variants `h = h ? h : h;` and doubled forms
+behave identically. Distinct from the 6e fake-dependency ternary, which is used to create an
+ordering dependence -- here the ternary is used *purely as a web-priority boost* and its value
+is discarded by the optimizer. Reach for this when two values are fighting over one
+callee-saved register and use-count (not order) is the discriminator.
+
+**2. Callee-saved web rank follows the DECLARATION SCOPE DEPTH of the value-carrying temp.**
+Measured on one value, everything else fixed: function-top decl -> sb (87 div), while-top ->
+r6 (63), nested block -> r5 (41). Shallower scope = higher-numbered register. Independently
+this reached the same fix as lever 1 above.
+
+**3. A coalescing copy `y = u;` ranks by WHICH SIDE carries the live range across the calls.**
+Placed BEFORE the calls, the web ranks as `y` (function-scope, bottom rank); placed AFTER the
+competing def, it ranks as `u` (the block-scoped temp). This refines 6q: web *identity* is not
+fixed by the variable, it is steerable by where the copy sits relative to the calls the range
+crosses.
+
+**4. `volatile` as a COLORING lever, not an aliasing one** (from the WithMeshClsn `str`-pair
+cluster). Default mwccarm behaviour with two plain scalar temps: r4 goes to the temp of the
+LAST store, and loads are emitted in REVERSE store order. The ROM did the opposite (r4 = the
+first-stored value, loads in natural order) and NO permutation of assignment/store/decl order
+reached it (7 forms). Reading each value through a volatile lvalue --
+`c0 = *(volatile s32 *)&src->si.w0;` -- pins load order AND flips the r4 binding to
+first-stored, byte-identical, with the offset-form ldr/str otherwise unchanged. Caveat found
+the same session: volatile pinning only flips MEMORY-sourced webs; on two register-computed
+values it does nothing (and forcing a memory round-trip adds instructions).
+
+### Floors confirmed the same session (do not re-grind; both are marked in nearmiss/db.jsonl)
+
+- **Prologue ARG-HOMING order** (`OAM::Render`, 2 words at +0x38/+0x3c): ~16 distinct spellings
+  across 4 agents. Several give BYTE-IDENTICAL output; decl order reaches the region but
+  rotates registers instead of reordering the store; direct `.val` use and struct-caching both
+  regress to 52. Compiler-internal.
+- **Allocator priority between two register-computed values** (`WithMeshClsn`, 5 words): the
+  hoist itself is reachable, but the resulting vo2/cp r4<->r6 identity swap survived retyping
+  as pointer, both launder shapes, dead-web coalescing (via two different dead webs), and
+  use-count inflation (copy-prop folds it) -- the last four produced BITWISE-IDENTICAL output.
+
+**Method note.** Both functions were closed by running 3 agents on the SAME target with
+DIFFERENT angles and cross-pollinating: on `OAM::Render` two agents reached div 2 independently
+via lever 1 and lever 2 above. A single agent had already declared that residual a floor after
+10 probes -- it was not. Conversely, a residual that survives ~4 agents with disjoint angles
+(as both floors above did) is worth believing.
+
 ## 9. Prebuilt-library TUs: the ROM contains objects the canonical compiler never built
 
 Distinct from every floor above. These are not "C we cannot spell" -- they are translation units
