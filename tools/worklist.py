@@ -62,11 +62,22 @@ def mnem_key(ins):
 
 
 def read_src_text(name):
+    # A function can end up with BOTH src/<name>.c and src/<name>.cpp -- typically a
+    # stale `// NONMATCHING` near-miss draft left behind when the real match later landed
+    # under the other extension. Returning the first-found (old behaviour: .c before .cpp)
+    # lets a stale NONMATCHING draft SHADOW a landed match, so every caller that checks
+    # "is this matched?" sees the banner and wrongly treats the function as unmatched --
+    # resurrecting it as a fan-out/permuter target and a near-miss-DB ghost. Prefer a real
+    # match over a NONMATCHING draft when both exist.
+    texts = []
     for ext in ("c", "cpp"):
         p = REPO_SRC / f"{name}.{ext}"
         if p.exists():
-            return p.read_text(encoding="utf-8")
-    return None
+            texts.append(p.read_text(encoding="utf-8"))
+    for t in texts:
+        if "// NONMATCHING" not in t[:200]:
+            return t
+    return texts[0] if texts else None
 
 
 def target_is_done(done, label, addr, name):
