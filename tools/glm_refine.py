@@ -375,7 +375,14 @@ def crack_one(name, wl, attempts, row, live=False):
                 return {"name": name, "matched": True, "c_source": src, "attempts": att,
                         "divergences": 0, "orig_div": orig_div, "note": note or "matched",
                         "log": att_log}, t_in, t_out
-            if floor or stale >= 2:
+            # No early-stop until the model has produced COMPILING C (best_div < 999). div==999
+            # means the draft did not even compile (verify found no "divergences=" line), so both
+            # early-stop signals are meaningless there: a "floor":true is the model giving up before
+            # it has shown it understands the function, and a 999->999 "stale" round is just two
+            # non-compiles, not a stuck near-miss. On a from-scratch target, spend the full attempt
+            # budget getting SOMETHING to compile; only once there's a real near-miss do the floor
+            # self-declaration and the stale>=2 no-progress guard apply.
+            if best_div < 999 and (floor or stale >= 2):
                 break
             messages.append({"role": "assistant", "content": reply})
             messages.append({"role": "user", "content":
