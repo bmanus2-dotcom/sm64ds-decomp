@@ -214,12 +214,17 @@ def chat(messages, max_tokens=8000, retries=RETRIES, on_delta=None):
         # with a bigger --context, e.g. 32768, or this headroom can't be used.)
         if "reason" in MODEL.lower() or is_nemo:
             mt = max(mt, 24000)
-        body = {"model": MODEL, "max_tokens": mt, "messages": messages}
-        # OpenAI's reasoning models take the effort as `reasoning_effort` (minimal|low|medium|high)
-        # rather than a thinking budget. Only sent for models that actually accept it - other
-        # OpenAI-dialect hosts (DeepSeek, Kimi, Requesty's free pool) 400 on an unknown field; the
-        # 400 handler below drops it and retries, so a wrong guess costs one retry, not the run.
-        if EFFORT and EFFORT != "off" and re.match(r"^(gpt-5|o[1-4])", MODEL.lower()):
+        # OpenAI's own reasoning models (gpt-5 / o-series) REJECT max_tokens outright
+        # ("Unsupported parameter: 'max_tokens' ... use 'max_completion_tokens'"), while every other
+        # OpenAI-dialect host (DeepSeek, Kimi, Requesty, LM Studio) only knows max_tokens. Pick by
+        # model; the 400 handler below also swaps them if this guess is wrong for some host.
+        _openai_reasoner = bool(re.match(r"^(gpt-5|o[1-4])", MODEL.lower()))
+        body = {"model": MODEL, "messages": messages}
+        body["max_completion_tokens" if _openai_reasoner else "max_tokens"] = mt
+        # Those same models take the effort as `reasoning_effort` (minimal|low|medium|high) rather
+        # than a thinking budget. Only sent where it's accepted - other hosts 400 on an unknown
+        # field; the 400 handler drops it and retries, so a wrong guess costs one retry, not the run.
+        if EFFORT and EFFORT != "off" and _openai_reasoner:
             body["reasoning_effort"] = EFFORT
         if stream:
             body["stream"] = True
@@ -272,10 +277,20 @@ def chat(messages, max_tokens=8000, retries=RETRIES, on_delta=None):
         # Model rejected the reasoning param -> drop it and retry without extended thinking.
         if r.status_code == 400 and "thinking" in body:
             body.pop("thinking", None); body.pop("temperature", None); continue
-        # Same for the OpenAI-dialect reasoning knob: a host that doesn't take reasoning_effort
-        # 400s on the unknown field, so drop it and retry plain rather than failing the function.
-        if r.status_code == 400 and "reasoning_effort" in body:
-            body.pop("reasoning_effort", None); continue
+        # A 400 on the OpenAI dialect is usually one wrong knob, not a dead request - adapt to what
+        # the host says it wants and retry instead of failing the whole function. Each branch fires
+        # at most once (it changes the body so the guard stops matching).
+        if r.status_code == 400:
+            _m = r.text.lower()
+            # gpt-5 / o-series want max_completion_tokens; everyone else wants max_tokens.
+            if "max_completion_tokens" in _m and "max_tokens" in body:
+                body["max_completion_tokens"] = body.pop("max_tokens"); continue
+            if "max_tokens" in _m and "max_completion_tokens" in body:
+                body["max_tokens"] = body.pop("max_completion_tokens"); continue
+            if "reasoning_effort" in body and "reasoning_effort" in _m:
+                body.pop("reasoning_effort", None); continue
+            if "temperature" in body and "temperature" in _m:
+                body.pop("temperature", None); continue
         raise RuntimeError(f"GLM API {r.status_code}: {r.text[:300]}")
     raise RuntimeError("GLM API: rate-limited, retries exhausted")
 
