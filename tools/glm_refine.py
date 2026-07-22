@@ -319,10 +319,15 @@ def crack_one(name, wl, attempts, row, live=False):
         att_log.append(msg)
         if live:
             log(f"    {name} {msg}")
-    # Live token echo -> STDERR. The console shows stderr in its live viewer, but its progress parser
-    # only reads STDOUT, so raw model text (which could contain a "(1/2) ...: MATCH"-looking line) can
-    # never be miscounted as a completion. Buffered so a fast stream doesn't flood the IPC: flushed on
-    # a newline or ~120 chars, with the tail flushed after each reply.
+    # Live token echo -> STDERR. OFF by default: echoing the raw reply dumps the model's entire C
+    # source plus its {"note": ...} reasoning into the viewer for every attempt, which buries the
+    # per-attempt div lines that are the actual signal. The progress lines above already show a
+    # sequential drive advancing. Set TANGOS_STREAM_TOKENS=1 to get the raw stream back (useful when
+    # a slow local model would otherwise sit silent for a minute per function).
+    # It goes to STDERR because the console's progress parser reads only STDOUT, so raw model text
+    # (which can contain a "(1/2) ...: MATCH"-looking line) can never be miscounted as a completion.
+    # Buffered so a fast stream doesn't flood the IPC: flushed on a newline or ~120 chars.
+    echo_tokens = live and os.environ.get("TANGOS_STREAM_TOKENS", "").strip() in ("1", "true", "yes")
     _sbuf, _slen = [], [0]
     def stream_echo(frag):
         _sbuf.append(frag); _slen[0] += len(frag)
@@ -333,7 +338,7 @@ def crack_one(name, wl, attempts, row, live=False):
         if _sbuf:
             sys.stderr.write("".join(_sbuf) + "\n"); sys.stderr.flush()
             _sbuf.clear(); _slen[0] = 0
-    on_delta = stream_echo if live else None
+    on_delta = stream_echo if echo_tokens else None
     try:
         ctx = run_tool(["tools/abrow.py", "--name", name, "--wl", wl])
         draft = row.get("draft") or ""
