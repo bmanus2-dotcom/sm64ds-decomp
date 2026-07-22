@@ -1,6 +1,3 @@
-// NONMATCHING: register allocation (div=6). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 extern unsigned char* data_0209fd0c;
 extern unsigned char NumStars(void);
 extern int func_020138dc(void);
@@ -20,7 +17,7 @@ void func_0203128c(void){
   int i;
   int q;
   int cnt;
-  unsigned char* pp;
+  int n2;
   g = data_0209fd0c;
   mode = (unsigned short)(g[4] | (g[3]<<8));
   switch(mode){
@@ -48,14 +45,14 @@ void func_0203128c(void){
     break;
   case 1:
     func_02031028(-1);
-    num = 0;
+    n2 = 0;
     if((int)data_0209fca0[0] > 0){
-      pp = data_02092818;
+      unsigned char* pp = data_02092818;
       do {
         func_02031b84(*pp);
-        num++;
+        n2++;
         pp++;
-      } while(num < (int)data_0209fca0[0]);
+      } while(n2 < (int)data_0209fca0[0]);
     }
     break;
   }

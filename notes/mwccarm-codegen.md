@@ -1309,6 +1309,55 @@ match at 1.2 and whether the divergent idiom appears ANYWHERE in the matched cor
 idiom is unique to that TU and a different mwccarm version reproduces it, stop -- it is a
 prebuilt object, and the div count is not a measure of how close you are.
 
+## 7a. The arm9 near-miss head: "register allocation" is a MISLABEL (2026-07-22, Opus->Fable cascade, 6 matches)
+
+The heuristic categorizer in `refine_wl.py` labelled ALL 14 arm9 near-miss drafts
+"register allocation" -- the category the router sends to the permuter and skips by
+default. That head had therefore NEVER been refined. It was wrong on 6 of 8: the
+residuals were structural, and 6 landed. **Run `refine_wl.py --include-all-cats` on a
+module whose head is uniformly one category** -- a uniform label is evidence of a
+categorizer failure, not of a real floor. (The same head is likely mislabelled in other
+modules; check before trusting the routing.)
+
+Levers that landed (all steer coloring/scheduling through SOURCE STRUCTURE, not pragmas):
+
+- **Reverse-order independent global stores** (`func_020338b0`, div 4->0). mwcc
+  re-reverses two adjacent independent stores to globals, so write the pair in the
+  REVERSE of the order you want emitted. Combined here with hoisting one store above an
+  `if` guard, which fixed an r1/r2-vs-r2/r3 scratch split.
+- **Block-scope the loop pointer, declare the counter last** (`func_0203128c`, div 6->0).
+  Scoping a pointer inside the if-body and declaring a distinct counter local AFTER it
+  flipped a pure r5/r6 swap. This is 6i applied to a loop induction pair.
+- **Stage a store-triple through a local struct temp, in emission order**
+  (`func_0200c394`, div 7->0). Three shifted s16->fx32 values assigned to `t.x/t.z/t.y`
+  in that order, then stored out, rotated the load/shift registers to r0/r3/r1/r2
+  exactly. A struct temp is a stronger ordering constraint than three scalars.
+- **Short-typed callee params hoist the narrowing** (`func_0205f77c`, div 8->0).
+  Declaring the callee with `unsigned short` params instead of keeping explicit u16
+  locals lets the compiler hoist the narrowing; explicit u16 temps rotated ALL
+  callee-saved coloring (a 720-permutation decl sweep bottomed at div 22). Cf. 6y.
+- **Arg pass-through keeps r0-r2 live to the `bl`** (`func_02068dc8`, div 4->0, Fable).
+  A callee declared `void`/no-args in the DB was really taking the caller's args:
+  passing `a,b,c` through costs zero instructions and holds r0-r2 live to the call,
+  rotating an early scratch temp onto r3. **This is the 6z `this`-liveness lever
+  generalized from C++ methods to plain args** -- suspect it whenever an early flag-load
+  temp lands one register too low.
+- **Drop an index temp for pure array subscripts** (`func_0203bc7c`, div 7->0, Fable).
+  After `#pragma opt_loop_invariants off` fixed the pooled base coloring, removing an
+  `ofs = i*2` temp in favour of `arr[i]` renumbered the vregs and slotted the induction
+  `add` into a load-use gap. An index temp is an extra vreg; subscripts are free.
+
+**Also confirmed here**: a low-div residual can be a COMPREHENSION bug. `func_0205f77c`'s
+last 3 divergences were not codegen at all -- the "discarded" tail IME read is the
+function's RETURN VALUE (`dummy = *IME; ... return dummy;`). Read the tail before
+declaring a floor.
+
+**Real floors from this batch** (both survived Opus 8 attempts AND Fable 8):
+`_ZN3OAM6RenderEbP7OamAttriiiiP9Matrix2x2` div 2 (coupled schedule+coalescing: the target
+needs the AND after the dependent `lsr` with dst on the pool-const register; any order
+that moves the AND later rotates t0 out of sl and blows div to 29-30) and `func_020729f4`
+div 3 (r0/r1 rotation on a loop-head tag byte, invariant under 12+ spellings).
+
 ---
 
 *Add to this file whenever you learn a new codegen rule. It is the project's accumulating
