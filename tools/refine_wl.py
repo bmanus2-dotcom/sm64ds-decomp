@@ -40,7 +40,12 @@ ATTEMPTED = REPO / "progress" / "refine_attempted.txt"
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--max-div", type=int, default=6)
+    # Keep in sync with coddog.REFINE_MAX_DIV: this threshold splits the two tiers, so a draft
+    # at or under it is the refiner's and anything above stays a fresh coddog target. At the old
+    # default of 6 only ~40 of the ~750 banked drafts qualified (median divergence is 43), so the
+    # refiner reported "nothing close enough" while those same drafts were parked out of the
+    # drafter - the backlog belonged to neither tier.
+    ap.add_argument("--max-div", type=int, default=20)
     ap.add_argument("--limit", type=int, default=20)
     ap.add_argument("--min-size", default=None,
                     help="only near-misses with size >= this (hex ok, e.g. 0x100); "
