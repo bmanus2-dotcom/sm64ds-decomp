@@ -1,6 +1,3 @@
-// NONMATCHING: base materialization / addressing (div=13). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef short s16;
@@ -12,13 +9,13 @@ extern char data_ov002_02110424;
 
 struct Player {
     char pad0[0x8e];
-    s16 field_8e;            /* 0x8e */
+    s16 field_8e;
     char pad2[0x94 - 0x90];
-    s16 field_94;            /* 0x94 */
+    s16 field_94;
     char pad3[0xa0 - 0x96];
-    int field_a0;            /* 0xa0 */
+    int field_a0;
     char pad4[0x6de - 0xa4];
-    u8 field_6de;            /* 0x6de */
+    u8 field_6de;
 };
 
 extern void func_ov002_020e28d4(struct Player *thiz, int a, int b);
@@ -34,10 +31,10 @@ int _ZN6Player12St_Spin_MainEv(struct Player *thiz)
     }
     if (*(u16*)((char*)data_0209f49c + (&data_020a0e40)[0] * 0x18) & 2) {
         thiz->field_a0 = -0x9000;
-        thiz->field_8e += 0x2000;
+        *(s16 *)(int)(((long long)(int)((char *)thiz + 0x8e)) & 0xFFFFFFFFFFFFFFFFLL) += 0x2000;
     } else {
         thiz->field_a0 = -0xc000;
-        thiz->field_8e += 0x1800;
+        *(s16 *)(int)(((long long)(int)((char *)thiz + 0x8e)) & 0xFFFFFFFFFFFFFFFFLL) += 0x1800;
     }
     func_ov002_020bedd4(thiz);
     return 1;

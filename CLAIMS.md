@@ -19,6 +19,10 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
+| ov002 _ZN6Player12St_Spin_MainEv (0x020e10ec, size 0xb0) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); u64-mask field_8e RMW; API clm_82e428d3a1b7 kept |
+| ov007 func_ov007_020c0078 (0x020c0078, size 0xb0) | lunavyqo (Grok) | 2026-07-23 | **released** — batch5 no_progress div=15 regperm floor (c base r2 vs r3); tip remains in nearmiss/db.jsonl; API clm_0929f335350d released |
+| ov075 func_ov075_0211a948 (0x0211a948, size 0xb8) | lunavyqo (Grok) | 2026-07-23 | **released** — batch5 no_progress div=5 regperm floor (r2/r3 b vs f0); tip remains in nearmiss/db.jsonl; API clm_489c766cf6a6 released |
+| ov002 _ZN6Player21St_OpeningWakeUp_MainEv (0x020c3dd0, size 0xbc) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); u64-mask 0x6e3 + bedd4 after switch; API clm_68a29d9ec00a kept |
 | ov006 func_ov006_020fac48 (0x020fac48, size 0xec) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); near-miss→permuter r4/r5 via (c+n)/p_row mix |
 | ov002 Coin::CleanupResources (_ZN4Coin16CleanupResourcesEv @ 0x020b2198, size 0xec) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); u64-launder star-count RMW |
 | ov002 func_ov002_020b18f0 (0x020b18f0, size 0xec) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); u64-mask Vector3 base; claim kept |
