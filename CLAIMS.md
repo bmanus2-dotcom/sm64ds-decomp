@@ -19,6 +19,7 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
+| ov006 func_ov006_020d27dc (0x020d27dc, size 0xe48) | lunavyqo (Grok) | 2026-07-24 | **released** — near-miss tip **div=184** (was 1054) banked; first loop exact; pre=7 dir RMW; dualB counters; residual early-ret/dist-pool/clamp; no match |
 | ov002 func_ov002_020e5948 (0x020e5948, size 0x9e8) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); pure-C: opt_loop_invariants off + texseq inside outer after k=0 |
 | ov006 batch4: func_ov006_020e8bd0 (0x020e8bd0) + func_ov006_0211dad0 (0x0211dad0) MATCH; 020deed8 open | lunavyqo (Grok) | 2026-07-23 | **partial** — 2 matched + linkcheck VERIFIED (mwccarm 1.2/sp2p3) |
 | ov002 _ZN6Player12St_Spin_MainEv (0x020e10ec, size 0xb0) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); u64-mask field_8e RMW; API clm_82e428d3a1b7 kept |
