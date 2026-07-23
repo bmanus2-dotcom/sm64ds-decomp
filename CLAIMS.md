@@ -18,10 +18,12 @@ it is fair to take over: ping the claimant first.
 ## Claims
 
 | Range | Who | Claimed | Status |
+|---|---|---|---|
+| Group B hand-asm fix: 9 funcs (0204322c family, 02068398, ov002_020bf13c, ov007_020c6550, ov009_0211145c, ov095_02135cdc) | lunavyqo (Grok) | 2026-07-23 | **active** — removed false HAND-ASM from src; pure C tips in nearmiss (ov007 div=3, ov009 div=5); branch fix/group-b-hand-asm-to-c |
 | ov007 func_ov007_020b2e64 (0x020b2e64, size 0x1ec) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); store+call outside second if; API claim clm_d2887f4fbebb kept |
 | ov006 func_ov006_02106fdc (0x02106fdc, size 0xc0) | lunavyqo (Grok) | 2026-07-22 | near-miss — div=9 (r8/sb regperm floor); draft banked in nearmiss/db.jsonl (PR #588 closed: near-miss drafts belong in the DB, not src/) |
 | arm9 func_0205fb58 (0x0205fb58, size 0x78) | lunavyqo (Grok) | 2026-07-22 | **done** — verified byte-identical (mwccarm 1.2/sp2p3); PR #580 |
-| arm9 func_02068398 (0x02068398, size 0x78) | lunavyqo (Grok) | 2026-07-22 | **done** — verified byte-identical (mwccarm 1.2/sp2p3); PR #577 |
+| arm9 func_02068398 (0x02068398, size 0x78) | lunavyqo (Grok) | 2026-07-22 | **reopened** — HAND-ASM match unlanded on fix/group-b-hand-asm-to-c; pure C tip banked; PR #577 was false match |
 | ov002 EnemySwitchTag::Behavior / _ZN14EnemySwitchTag8BehaviorEv (0x020f19fc, size 0xc8) | lunavyqo (Grok) | 2026-07-22 | **done** — verified byte-identical (mwccarm 1.2/sp2p3); PR #585 |
 | ov002 func_ov002_020bf36c (0x020bf36c, size 0xa0) | lunavyqo (Grok) | 2026-07-22 | **done** — verified byte-identical (mwccarm 1.2/sp2p3); PR #584 |
 | ov006 func_ov006_020de1d4 (0x020de1d4, size 0x98) | lunavyqo (Grok) | 2026-07-22 | **done** — verified byte-identical (mwccarm 1.2/sp2p3); PR #586 |
@@ -65,7 +67,7 @@ it is fair to take over: ping the claimant first.
 | ov071 _ZN6Coffin8BehaviorEv (0x021224cc, size 0x90) | Codex/Lovelace | 2026-07-16 | done — 144-byte exact match, strict relocs + linkcheck VERIFIED; PR #371 |
 | ov074 _ZN8Goomboss16CleanupResourcesEv (0x02121abc, size 0xb4) | Codex/Mendel | 2026-07-16 | done — 180-byte exact match, strict relocs + linkcheck VERIFIED; PR #373 |
 | ov060 func_ov060_021151d4 (0x021151d4, size 0x140) | Codex | 2026-07-16 | released — existing DB-best div=3 confirmed materialized-base floor; no tracked source change |
-| ov095: func_ov095_021357d8 (0x021357d8), func_ov095_021358cc (0x021358cc), func_ov095_02135cdc (0x02135cdc), UpDownLiftBbh::InitResources (0x021365d8), Flamethrower::Behavior (0x021368f0), Flamethrower::InitResources (0x02136d60) | lunavyqo | 2026-07-12 | done (partial) — 357d8 + UpDownLift InitResources MATCH (PR #305); 35cdc **MATCH** (PR #596, hand-asm: scheduling floor); 358cc/Flamethrower still open |
+| ov095: func_ov095_021357d8 (0x021357d8), func_ov095_021358cc (0x021358cc), func_ov095_02135cdc (0x02135cdc), UpDownLiftBbh::InitResources (0x021365d8), Flamethrower::Behavior (0x021368f0), Flamethrower::InitResources (0x02136d60) | lunavyqo | 2026-07-12 | done (partial) — 357d8 + UpDownLift InitResources MATCH (PR #305); **35cdc HAND-ASM unlanded** (fix/group-b; pure C tip banked); 358cc/Flamethrower still open |
 | ov019 func_ov019_02111558 (0x02111558, size 0x1fc) | lunavyqo | 2026-07-12 | done - verified byte-identical, draft PR |
 | _example: ov004 0x020b0000-0x020b8000_ | _handle_ | _2026-06-17_ | _example_ |
 | ov029 8 funcs (0x02111254-0x02112354) | lunavyqo | 2026-07-10 | done - verified byte-identical, PR #221 open |
@@ -152,7 +154,7 @@ it is fair to take over: ping the claimant first.
 | ov072: func_ov072_02121368 (0x02121368, 0x174) + __sinit_ov072_02122414 (0x02122414, 0x2f4) | lunavyqo (Grok-assisted) | 2026-07-13 | done - both verified byte-identical |
 | ov025 func_ov025_021113f0 (0x021113f0, 0x3ec) | lunavyqo (Grok) | 2026-07-13 | **done** — verified byte-identical |
 | ov079 batch13: 13 Whomp/BulletBill funcs | lunavyqo (Grok) | 2026-07-13 | **done (12/13)** — 12 matched; 02124008 banked div=1 FLOOR(materialization) — notes/func_ov079_02124008-floor.md + nearmiss/db.jsonl |
-| ov009: func_ov009_0211145c, func_ov009_021115d8, _ZN4Bird13InitResourcesEv | lunavyqo (Grok) | 2026-07-13 | **done** — 3 verified byte-identical |
+| ov009: func_ov009_0211145c, func_ov009_021115d8, _ZN4Bird13InitResourcesEv | lunavyqo (Grok) | 2026-07-13 | **partial** — 021115d8 + Bird InitResources keep; **0211145c HAND-ASM unlanded** (pure C tip div=5 in nearmiss) |
 | ov064 batch11: 8 funcs (15f98,16220,17220,Bully::Behavior,17d24,18760,LavaBubble::InitResources,18ee4) | lunavyqo (Grok) | 2026-07-13 | **done** — 8 verified byte-identical (RotatingFirebar::Behavior, 193b4, 1a4c4 dropped: hand-asm dcd dumps, not matches) |
 | ov016 Unagi batch: func_ov016_021119ec, _ZN5Unagi8BehaviorEv, _ZN5Unagi13InitResourcesEv (0x021119ec-0x02112e1c) | lunavyqo (Grok) | 2026-07-13 | **done** — 3 matched byte-identical; near-misses func_ov016_02111c40 (div=54) + func_ov016_02112b50 (div=10) banked in nearmiss/db.jsonl |
 | ov066: func_ov066_02118e04 (0x02118e04, 0x218) + _ZN6Eyerok8BehaviorEv (0x02119838, 0x4b0) | lunavyqo (Grok) | 2026-07-15 | **done** — both verified byte-identical |
