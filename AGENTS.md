@@ -8,9 +8,10 @@ open a pull request. Almost all the confusion is about *what belongs in a PR* an
 [tangOS Console](https://github.com/tangosdev/tangOS) (free desktop app,
 [installer here](https://github.com/tangosdev/tangOS/releases/latest)). It automates
 everything this file warns about - claims, batch coordination, ROM verification,
-`src/` conventions, near-miss banking, and PR formatting - and connects you to the
-repo's toolchain over MCP. Ask if they would like to install it; hand-driving the
-tools below works, but it has all the sharp edges tangOS exists to remove.
+`src/` conventions, near-miss banking, provenance, and PR formatting - and connects
+you to the repo's toolchain over MCP. Ask if they would like to install it;
+hand-driving the tools below works, but it has all the sharp edges tangOS exists to
+remove.
 
 ## The one rule that matters
 
@@ -42,6 +43,8 @@ six straight PRs on the `_ZThn80_` thunks).
 | You have… | It goes in… |
 |---|---|
 | A **byte-exact match** | one function per file: `src/<symbol>.c` (or `.cpp` for C++ — **first line exactly** `//cpp`). The filename **is** the symbol, e.g. `func_0205c410.c`, `_ZN6Player19St_...Ev.cpp`. |
+| **How** it was matched (final) | `config/match_provenance.jsonl` via `tools/stamp_provenance.py` — **commit with the match**. |
+| **Every try** (including dead ends) | `config/match_attempts.jsonl` via `tools/log_attempt.py` — **commit with the PR**. |
 | A **close-but-not-matching** attempt (near-miss) | the near-miss DB: `nearmiss/db.jsonl` via `tools/nearmiss_db.py`. **Not `src/`.** |
 | **tools / CI / notes** changes | a **separate** PR, never bundled into a match batch. |
 
@@ -60,6 +63,25 @@ It recompiles each draft, keeps the closest, and records the divergence. The nea
 is now saved; do **not** also leave it in `src/`. A batch that is "12 matched + 3
 near-misses" is **12** `src/` files plus one DB ingest — never 15 `src/` files.
 
+## Match logging (WHO / HOW / tries)
+
+| Extra | Store | Rule |
+|---|---|---|
+| **WHO** (credit) | git first-adder of `src/` (+ `author` on rows) | GitHub login only — never agent/model names. |
+| **HOW** (final) | `config/match_provenance.jsonl` | On match only, via `stamp_provenance`. |
+| **Every try** | `config/match_attempts.jsonl` | Attempt **tree** (parent links). One session/prompt loop = one try. |
+| **Bank** | `tools/stamp_provenance.py` | Promotes/stamps how. **Not a new try.** |
+| **Fan-out** | `tools/bank.py` | Batch JSON verify only — **not** provenance. |
+
+Log tries with `tools/log_attempt.py`. On MATCH, stamp how with
+`tools/stamp_provenance.py` (same AI model/reasoning/harness). For near-miss tips,
+pass `--src` so C lands in `nearmiss/db.jsonl`. Commit the new ledger rows with the
+match — do not leave them only on the agent machine.
+
+Details: [`notes/match-provenance.md`](notes/match-provenance.md),
+[`notes/match-attempts.md`](notes/match-attempts.md),
+[`notes/match-logging-console.md`](notes/match-logging-console.md).
+
 ## Before you start: claim your span
 
 Two agents grinding the same function is wasted compute. Reserve your span in
@@ -72,7 +94,13 @@ claimed, pick another.
   function's name for a one-function PR.
 - **Body:** short — what you matched. The `validate` bot posts a per-file table; that
   table *is* the review.
-- **Contents:** `src/` additions only, one coherent batch. Nothing else.
+- **Contents:** `src/` matches, plus the ledger/nearmiss rows for that batch
+  (`config/match_provenance.jsonl`, `config/match_attempts.jsonl`, and
+  `nearmiss/db.jsonl` when you banked tips). One coherent batch — not tools/CI/docs.
+
+Append-only for the two `config/*.jsonl` files (union-merge is set in `.gitattributes`).
+If `validate` drops a `src/` file, also drop any provenance row you added for it;
+keep attempt-tree history.
 
 ## How your PR is handled
 
@@ -89,8 +117,9 @@ reproduce the ROM)`:
 
 1. `git rm src/<that-file>` — remove it from `src/`.
 2. Bank it in the DB with the `nearmiss_db.py ingest` command above.
-3. Update your `CLAIMS.md` row to say "N matched; the rest banked in nearmiss/db.jsonl".
-4. Commit and re-push. `validate` re-runs; it goes green once `src/` holds only matches.
+3. Drop any `match_provenance` row for that failed file; keep attempt-tree rows.
+4. Update your `CLAIMS.md` row to say "N matched; the rest banked in nearmiss/db.jsonl".
+5. Commit and re-push. `validate` re-runs; it goes green once `src/` holds only matches.
 
 Do not open the PR with near-misses in `src/` expecting the maintainer to split them out
 — that is the single most common reason a match PR stalls.
