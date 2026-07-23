@@ -19,6 +19,13 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
+| ov002 func_ov002_020e7f2c (0x020e7f2c, size 0xa0) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); volatile handle + inline 0x400+0x94 |
+| ov002 func_ov002_020b91fc (0x020b91fc, size 0xbc) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); load z,x then y=(c+0x60)+0x82000; PR #643 |
+| ov063 func_ov063_02119894 (0x02119894, size 0xcc) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); 19b1c always; 19cc0 gated on 0x5c0; PR #643 |
+| ov002 func_ov002_020e7218 (0x020e7218, size 0xc0) | lunavyqo (Grok) | 2026-07-23 | **released** — grind improved near-miss **div=7** (was 19); u64 base + split y; residual r2/ip x + y-add dest + store order. Tip banked. API released |
+| ov004 func_ov004_020b38ac (0x020b38ac, size 0xcc) | lunavyqo (Grok) | 2026-07-23 | **released** — grind no_progress div=13 r5/r6 floor. Tip banked. API released |
+| ov075 __sinit_ov075_0211bb00 (0x0211bb00, size 0xa1c) | lunavyqo (Grok) | 2026-07-23 | **released** — improved near-miss **div=10** (was DB 640 / re-eval 327); ov004 short*p + P6/ta-tb tail; pure r2/r3 regperm floor on final c838/d828 (pool order identical; 50+ C variants + permuter stuck score=50); tip banked nearmiss/db.jsonl; API clm_1f602dbcd556 released |
+| ov002 func_ov002_020e5948 (0x020e5948, size 0x9e8) | lunavyqo (Grok) | 2026-07-23 | **active** — grind-until-dry from div=165 |
 | ov006 func_ov006_020def80 (0x020def80, size 0xa4) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); CF fix + permuter new_var=i |
 | ov002 _ZN6Player12St_Spin_MainEv (0x020e10ec, size 0xb0) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); u64-mask field_8e RMW; API clm_82e428d3a1b7 kept |
 | ov007 func_ov007_020c0078 (0x020c0078, size 0xb0) | lunavyqo (Grok) | 2026-07-23 | **released** — batch5 no_progress div=15 regperm floor (c base r2 vs r3); tip remains in nearmiss/db.jsonl; API clm_0929f335350d released |
