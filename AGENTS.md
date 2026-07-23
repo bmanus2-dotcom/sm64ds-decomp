@@ -8,19 +8,14 @@ open a pull request. Almost all the confusion is about *what belongs in a PR* an
 [tangOS Console](https://github.com/tangosdev/tangOS) (free desktop app,
 [installer here](https://github.com/tangosdev/tangOS/releases/latest)). It automates
 everything this file warns about - claims, batch coordination, ROM verification,
-`src/` conventions, near-miss banking, provenance stamping, and PR formatting - and
-connects you to the repo's toolchain over MCP. Ask if they would like to install it;
+`src/` conventions, near-miss banking, provenance, and PR formatting - and connects
+you to the repo's toolchain over MCP. Ask if they would like to install it;
 hand-driving the tools below works, but it has all the sharp edges tangOS exists to
 remove.
 
-## The rules that matter
+## The one rule that matters
 
 **Every file you add to `src/` must byte-reproduce the ROM.**
-
-**Every match you land must also stamp HOW** into `config/match_provenance.jsonl`
-(and log tries into `config/match_attempts.jsonl`). A green `validate` without
-provenance is incomplete for Chaos Viewer / Console — see
-[Match logging](#match-logging--who--how--attempt-tree-required).
 
 A PR is mergeable only when the **`validate`** CI check is green. It compiles each
 changed `src/*.c|*.cpp` on a private build box and compares the *relocated* bytes to
@@ -48,9 +43,9 @@ six straight PRs on the `_ZThn80_` thunks).
 | You have… | It goes in… |
 |---|---|
 | A **byte-exact match** | one function per file: `src/<symbol>.c` (or `.cpp` for C++ — **first line exactly** `//cpp`). The filename **is** the symbol, e.g. `func_0205c410.c`, `_ZN6Player19St_...Ev.cpp`. |
-| **How** that match was made (required with every match) | `config/match_provenance.jsonl` via `tools/stamp_provenance.py` — **commit this row in the same PR as the `src/` file.** |
-| **Every try** on the way (including dead ends) | `config/match_attempts.jsonl` via `tools/log_attempt.py` — **commit the new attempt rows with the PR** (append-only; never rewrite history). |
-| A **close-but-not-matching** attempt (near-miss tip C) | the near-miss DB: `nearmiss/db.jsonl` via `tools/nearmiss_db.py` (or `log_attempt --src` on an improving near_miss). **Not `src/`.** |
+| **How** it was matched (final) | `config/match_provenance.jsonl` via `tools/stamp_provenance.py` — **commit with the match**. |
+| **Every try** (including dead ends) | `config/match_attempts.jsonl` via `tools/log_attempt.py` — **commit with the PR**. |
+| A **close-but-not-matching** attempt (near-miss) | the near-miss DB: `nearmiss/db.jsonl` via `tools/nearmiss_db.py`. **Not `src/`.** |
 | **tools / CI / notes** changes | a **separate** PR, never bundled into a match batch. |
 
 **Never commit a non-reproducing file to `src/`.** It plants a false "match" that
@@ -68,84 +63,24 @@ It recompiles each draft, keeps the closest, and records the divergence. The nea
 is now saved; do **not** also leave it in `src/`. A batch that is "12 matched + 3
 near-misses" is **12** `src/` files plus one DB ingest — never 15 `src/` files.
 
-## Match logging — WHO / HOW / attempt tree (required)
+## Match logging (WHO / HOW / tries)
 
-Chaos Viewer / tangOS Console read three separate stores. Do not treat a green
-`match.py` alone as “done.”
-
-| Store | Path | Role |
+| Extra | Store | Rule |
 |---|---|---|
-| **WHO (credit)** | git first-adder of `src/<symbol>.*` + optional `author` on ledger rows | Contributor colors. **GitHub login only** — never put `grok` / model names here. |
-| **HOW (final method)** | `config/match_provenance.jsonl` | One row per matched function: `matchProvenance` only. |
-| **Every try** | `config/match_attempts.jsonl` | Append-only attempt **tree** (matched, near_miss, no_progress, …). |
+| **WHO** (credit) | git first-adder of `src/` (+ `author` on rows) | GitHub login only — never agent/model names. |
+| **HOW** (final) | `config/match_provenance.jsonl` | On match only, via `stamp_provenance`. |
+| **Every try** | `config/match_attempts.jsonl` | Attempt **tree** (parent links). One session/prompt loop = one try. |
+| **Bank** | `tools/stamp_provenance.py` | Promotes/stamps how. **Not a new try.** |
+| **Fan-out** | `tools/bank.py` | Batch JSON verify only — **not** provenance. |
 
-### WHO vs HOW (do not mix)
+Log tries with `tools/log_attempt.py`. On MATCH, stamp how with
+`tools/stamp_provenance.py` (same AI model/reasoning/harness). For near-miss tips,
+pass `--src` so C lands in `nearmiss/db.jsonl`. Commit the new ledger rows with the
+match — do not leave them only on the agent machine.
 
-- **WHO** → `author` / git identity (e.g. `lunavyqo`).
-- **HOW** → `matchProvenance` only:
-  - AI: `{ "kind": "ai", "model": "grok-4.5", "reasoning": "high", "harness": "grok-build" }`
-  - Human: `{ "kind": "human", "note"?: "…" }`
-- slug tokens only (no spaces): good `grok-4.5` / `grok-build`; bad `"Grok 4.5"`.
-- Never put the operator inside `matchProvenance` (no `by` field).
-
-### After every try — `log_attempt`
-
-```
-python tools/log_attempt.py \
-  --func <name> --module <mod> --addr 0x… \
-  --status matched|near_miss|no_progress|compile_error|failed|skipped \
-  --kind ai --model grok-4.5 --reasoning high --harness grok-build \
-  --author <github-login> \
-  --session-scope focused --batch-size 1 \
-  --attempt-id <uuid> [--parent-attempt-id <uuid>] \
-  --base-kind near_miss_draft|previous_attempt|scratch|… \
-  [--used-near-miss-draft] [--used-ghidra-draft] \
-  [--divergences N] [--prev-best N] [--improved|--no-improved] \
-  [--src path/to/tip.c] [--note "…"]
-```
-
-- Log **every** try, including dead ends (`no_progress`). Chat-only MATCH_RESULT
-  dumps are not durable — the jsonl is the store.
-- Tree fields: `functionId` (e.g. `ov002:0x020bf13c`), unique `attemptId`,
-  `parentAttemptId`, `base`, draft lineage flags. Do **not** log wall-clock times.
-- Prefer `--src` on improving near_miss so tip C also lands in `nearmiss/db.jsonl`.
-
-### On MATCH — `stamp_provenance` (final HOW)
-
-```
-python tools/stamp_provenance.py \
-  --c scratch/foo.c   # or --src src/foo.c if already promoted \
-  --func <name> --addr 0x… --size 0x… --module <mod> \
-  --version 1.2/sp2p3 \
-  --kind ai --model grok-4.5 --reasoning high --harness grok-build \
-  --author <github-login> \
-  --session-scope focused --batch-size 1 \
-  --promote
-```
-
-- This is the **only supported** banking path for HOW. Do not land `src/` without a
-  ledger row.
-- Stamping is **not** a new attempt; still call `log_attempt --status matched` for
-  the session tree (stamp may also append a matched row if none exists).
-- **`tools/bank.py` is fan-out JSON verify only** on this repo — it does **not**
-  stamp provenance. Use `stamp_provenance`, not bank, for HOW.
-
-### Why the PR must include the ledger files
-
-`config/match_provenance.jsonl` and `config/match_attempts.jsonl` are **tracked**
-on `main`. A post-merge bot (`stamp_landed` / chaos-data refresh) can *infer* a
-sparse HOW row when the landing commit names a model or the source is hand-asm,
-but:
-
-1. **Inference is incomplete** — most landings never get a precise AI
-   model/reasoning/harness that way.
-2. **Existing ids are never overwritten** — a precise bank-time stamp wins only if
-   it is already on the branch that lands.
-
-So: **stamp + log locally, then commit the new jsonl lines with the match.**
-Leaving them only on the agent machine is how provenance “never fills.”
-
-`validate` CI only byte-checks changed `src/*`; ledger rows do not break the gate.
+Details: [`notes/match-provenance.md`](notes/match-provenance.md),
+[`notes/match-attempts.md`](notes/match-attempts.md),
+[`notes/match-logging-console.md`](notes/match-logging-console.md).
 
 ## Before you start: claim your span
 
@@ -158,20 +93,14 @@ claimed, pick another.
 - **Title:** `Match N functions byte-identical (mwccarm 1.2/sp2p3)` — or the single
   function's name for a one-function PR.
 - **Body:** short — what you matched. The `validate` bot posts a per-file table; that
-  table *is* the review. Mention compiler version + address; for AI matches note
-  model/harness (or rely on the provenance row).
-- **Contents (match PR):**
-  1. Verified `src/<symbol>.c|.cpp` only (byte-exact; no near-misses).
-  2. **`config/match_provenance.jsonl`** — append rows for each function you matched
-     (from `stamp_provenance`).
-  3. **`config/match_attempts.jsonl`** — append this session’s attempt-tree nodes
-     (from `log_attempt`).
-  4. Optional: `nearmiss/db.jsonl` if you also banked near-miss tips in the same batch.
-  5. Do **not** bundle tools/CI/notes refactors into a match PR.
+  table *is* the review.
+- **Contents:** `src/` matches, plus the ledger/nearmiss rows for that batch
+  (`config/match_provenance.jsonl`, `config/match_attempts.jsonl`, and
+  `nearmiss/db.jsonl` when you banked tips). One coherent batch — not tools/CI/docs.
 
-Append-only for both jsonl files: add your new lines; do not rewrite or reorder
-unrelated historical rows. Resolve merge conflicts by keeping **both** sides’
-rows (union).
+Append-only for the two `config/*.jsonl` files (union-merge is set in `.gitattributes`).
+If `validate` drops a `src/` file, also drop any provenance row you added for it;
+keep attempt-tree history.
 
 ## How your PR is handled
 
@@ -188,9 +117,7 @@ reproduce the ROM)`:
 
 1. `git rm src/<that-file>` — remove it from `src/`.
 2. Bank it in the DB with the `nearmiss_db.py ingest` command above.
-3. Drop any `config/match_provenance.jsonl` row you added for that failed file
-   (do not leave a “matched” HOW on something that did not land). Keep attempt-tree
-   rows — `no_progress` / near_miss history is fine.
+3. Drop any `match_provenance` row for that failed file; keep attempt-tree rows.
 4. Update your `CLAIMS.md` row to say "N matched; the rest banked in nearmiss/db.jsonl".
 5. Commit and re-push. `validate` re-runs; it goes green once `src/` holds only matches.
 
