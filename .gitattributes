@@ -1,15 +1,17 @@
-# Workflow scripts must stay LF: the Claude Code Workflow launcher rejects files
-# with CR control characters. Keep all text predictable across contributors' OSes.
-* text=auto
-*.js text eol=lf
-*.py text eol=lf
-*.md text eol=lf
-*.jsonl text eol=lf -diff
-
-# Append-only attempt/provenance logs (tangOS match-conventions): union-merge so two contributors
-# appending concurrently keep BOTH sides' rows instead of hitting a conflict. Every row is a unique
-# attemptId, so keeping both is always correct. (merge=union is git's built-in append driver - no
-# custom script needed.) nearmiss/db.jsonl is deliberately NOT here: its tip C is rewritten, not
-# appended, so union-merging it would keep stale tips.
-config/match_attempts.jsonl merge=union
+# The provenance ledgers are append-only JSONL: every contributor's PR adds rows at
+# the end, so two PRs in flight always "conflict" on the final line even though the
+# right resolution is simply to keep both sets of rows. `merge=union` makes git take
+# both sides' lines instead of raising a conflict, which is exactly correct for an
+# append-only log and stops concurrent match PRs from blocking each other.
+#
+# Order within the file stops being meaningful under union merge, but nothing depends
+# on it: both stores are keyed by id and read into a dict (last write wins), and the
+# CI stamper dedupes by content before appending. A duplicate row from two sides
+# stamping the same landing is harmless.
 config/match_provenance.jsonl merge=union
+config/match_attempts.jsonl   merge=union
+
+# nearmiss/db.jsonl is NOT union-merged on purpose: it is one row per function keyed
+# by (module, addr), and a union of two edits to the same function would leave two
+# rows for it with different divergence counts. That needs the real line-union check
+# the PR review already does, not a blind concatenation.
