@@ -19,6 +19,8 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
+| ov002 func_ov002_020d5c6c (0x020d5c6c, size 0x80) | lunavyqo (Grok) | 2026-07-24 | **released** — improved near-miss **div=7** (was 17); u64-mask 0x6ce; r0/r1 regperm floor; tip banked |
+| ov006 func_ov006_020fbcb8 (0x020fbcb8, size 0x80) | lunavyqo (Grok) | 2026-07-24 | **released** — improved near-miss **div=18** (was 24); demand-order + p[bx]; tip banked |
 | ov006 func_ov006_02126ee4 (0x02126ee4, size 0xacc) | lunavyqo (Grok) | 2026-07-23 | **released** — improved near-miss **div=28** (was 393/46); size exact; residual pure sb/r8 regperm. Tip in nearmiss/db.jsonl |
 | ov002 func_ov002_020e7f2c (0x020e7f2c, size 0xa0) + near-miss tips e7218/1173c8/deed8 | lunavyqo (Grok) | 2026-07-24 | **done** — e7f2c MATCH + linkcheck VERIFIED; tips banked 19→7 / 597→15 / 13→9 |
 | ov002 func_ov002_020e5948 (0x020e5948, size 0x9e8) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); pure-C: opt_loop_invariants off + texseq inside outer after k=0 |
