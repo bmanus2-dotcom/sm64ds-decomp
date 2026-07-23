@@ -18,6 +18,8 @@ it is fair to take over: ping the claimant first.
 ## Claims
 
 | Range | Who | Claimed | Status |
+|---|---|---|---|
+| ov006 func_ov006_020fac48 (0x020fac48, size 0xec) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); near-miss→permuter r4/r5 via (c+n)/p_row mix |
 | ov002 Coin::CleanupResources (_ZN4Coin16CleanupResourcesEv @ 0x020b2198, size 0xec) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); u64-launder star-count RMW |
 | ov002 func_ov002_020b18f0 (0x020b18f0, size 0xec) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); u64-mask Vector3 base; claim kept |
 | ov007 func_ov007_020b2e64 (0x020b2e64, size 0x1ec) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); store+call outside second if; API claim clm_d2887f4fbebb kept |
