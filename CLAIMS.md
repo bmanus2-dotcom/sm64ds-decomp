@@ -19,6 +19,7 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
+| ov075 __sinit_ov075_0211bb00 (0x0211bb00, size 0xa1c) | lunavyqo (Grok) | 2026-07-23 | **released** — improved near-miss **div=10** (was DB 640 / re-eval 327); ov004 short*p + P6/ta-tb tail; residual pure r2/r3 regperm floor on final c838/d828; tip banked nearmiss/db.jsonl |
 | ov006 batch4: func_ov006_020e8bd0 (0x020e8bd0) + func_ov006_0211dad0 (0x0211dad0) MATCH; 020deed8 open | lunavyqo (Grok) | 2026-07-23 | **partial** — 2 matched + linkcheck VERIFIED (mwccarm 1.2/sp2p3) |
 | ov002 _ZN6Player12St_Spin_MainEv (0x020e10ec, size 0xb0) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); u64-mask field_8e RMW; API clm_82e428d3a1b7 kept |
 | ov007 func_ov007_020c0078 (0x020c0078, size 0xb0) | lunavyqo (Grok) | 2026-07-23 | **released** — batch5 no_progress div=15 regperm floor (c base r2 vs r3); tip remains in nearmiss/db.jsonl; API clm_0929f335350d released |
