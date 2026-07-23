@@ -1,49 +1,54 @@
-// NONMATCHING: different op / idiom (div=32). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
-extern void func_02012694(int a, void* p);
-extern int _ZNK12WithMeshClsn8IsOnWallEv(void* m);
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef short s16;
+typedef struct { int x, y, z; } Vector3;
+
+extern void func_02012694(unsigned int id, const Vector3* v);
+extern int _ZNK12WithMeshClsn8IsOnWallEv(void* c);
 extern int AngleDiff(int a, int b);
-extern void ApproachAngle(void* p, int target, int a, int b, int limit);
-extern int _ZN9Animation8FinishedEv(void* a);
-extern int func_ov090_02131e00(void* c, void* p);
+extern int ApproachAngle(s16* cur, int target, int divisor, int band, int maxStep);
+extern int _ZN9Animation8FinishedEv(void* c);
+extern void func_ov090_02131e00(void* c, const void* p);
 extern int RandomIntInternal(int* seed);
-extern char data_ov090_02134504[];
-extern char data_ov090_021344e4[];
-extern int data_0209e650[];
-int func_ov090_02131c48(char* c) {
-    unsigned int s;
-    s = (unsigned)((unsigned)(*(int*)(c+0x364) << 4) >> 0x10);
-    if (s >= 4u) *(int*)(c+0x98) = 0x19000;
-    s = (unsigned)((unsigned)(*(int*)(c+0x364) << 4) >> 0x10);
-    if (s == 4u) {
-        func_02012694(0xfd, c+0x74);
+
+extern int data_ov090_02134504;
+extern int data_0209e650;
+extern int data_ov090_021344e4;
+
+int func_ov090_02131c48(char* c)
+{
+    if ((((unsigned)*(int*)(c + 0x364)) << 4) >> 16 >= 4)
+        *(int*)(c + 0x98) = 0x19000;
+
+    if ((((unsigned)*(int*)(c + 0x364)) << 4) >> 16 == 4)
+        func_02012694(0xfd, (const Vector3*)(c + 0x74));
+
+    if (*(u16*)(c + 0x394) == 0
+        && _ZNK12WithMeshClsn8IsOnWallEv(c + 0x150)
+        && AngleDiff(*(s16*)(c + 0x94), *(s16*)(c + 0x39a)) < 0x200) {
+        s16* p = (s16*)(((int)c + 0x39a) & 0xFFFFFFFFFFFFFFFF);
+        *p = *p + 0x4000;
+        *(s16*)(c + 0x394) = 8;
     }
-    if (*(unsigned short*)(c+0x394) == 0) {
-        if (_ZNK12WithMeshClsn8IsOnWallEv(c+0x150) != 0) {
-            if (AngleDiff((int)*(short*)(c+0x94), (int)*(short*)(c+0x39a)) < 0x200) {
-                *(short*)(c+0x39a) = (short)(*(short*)(c+0x39a) + 0x4000);
-                *(unsigned short*)(c+0x394) = 8;
-            }
-        }
-    }
-    if (*(unsigned short*)(c+0x394) != 0) {
-        ApproachAngle(c+0x94, *(short*)(c+0x39a), 1, 0x1000, 0x1000);
+
+    if (*(u16*)(c + 0x394) != 0) {
+        ApproachAngle((s16*)(c + 0x94), *(s16*)(c + 0x39a), 1, 0x1000, 0x1000);
     } else {
-        if (_ZN9Animation8FinishedEv(c+0x35c) != 0) {
-            *(int*)(c+0x390) = *(int*)(c+0x390) + 1;
-            if (*(int*)(c+0x390) > 0x14) {
-                func_ov090_02131e00(c, data_ov090_02134504);
-                if (*(unsigned char*)(c+0x39c) == 0) {
-                    *(int*)(c+0x374) = *(int*)(c+0x5c);
-                    *(int*)(c+0x378) = *(int*)(c+0x60);
-                    *(int*)(c+0x37c) = *(int*)(c+0x64);
-                    int r = RandomIntInternal(data_0209e650);
-                    *(short*)(c+0x39a) = (short)((r >> 8) << 0xd);
-                    func_ov090_02131e00(c, data_ov090_021344e4);
-                }
-            }
+        if (_ZN9Animation8FinishedEv(c + 0x35c)) {
+            int* q = (int*)(((int)c + 0x390) & 0xFFFFFFFFFFFFFFFF);
+            *q = *q + 1;
+            if (*(int*)(c + 0x390) > 0x14)
+                func_ov090_02131e00(c, &data_ov090_02134504);
         }
     }
+
+    if (*(u8*)(c + 0x39c) == 0) {
+        *(int*)(c + 0x374) = *(int*)(c + 0x5c);
+        *(int*)(c + 0x378) = *(int*)(c + 0x60);
+        *(int*)(c + 0x37c) = *(int*)(c + 0x64);
+        *(s16*)(c + 0x39a) = (s16)(((unsigned)RandomIntInternal(&data_0209e650) >> 8) << 13);
+        func_ov090_02131e00(c, &data_ov090_021344e4);
+    }
+
     return 1;
 }
