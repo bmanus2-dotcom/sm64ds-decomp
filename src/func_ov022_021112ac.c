@@ -1,16 +1,19 @@
-// NONMATCHING: base materialization / addressing (div=19). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 extern unsigned short DecIfAbove0_Short(unsigned short *p);
 extern unsigned char DecIfAbove0_Byte(unsigned char *p);
 extern int ApproachAngle(short *p, int target, int a, int b, int c);
-extern void Sound_PlayBank3(unsigned int id, void *pos);
-extern void *Actor_Spawn(unsigned int a, unsigned int b, void *pos, void *v16, int e, int f);
+/* Keep the readable source names while binding them to the verified ROM symbols. */
+#define Sound_PlayBank3 _ZN5Sound9PlayBank3EjRK7Vector3
+#define Actor_Spawn _ZN5Actor5SpawnEjjRK7Vector3PK10Vector3_16ii
+extern void _ZN5Sound9PlayBank3EjRK7Vector3(unsigned int id, void *pos);
+extern void *_ZN5Actor5SpawnEjjRK7Vector3PK10Vector3_16ii(unsigned int a, unsigned int b, void *pos, void *v16, int e, int f);
 extern void func_020393a4(void *p, int v);
 extern void func_02039394(void *p, int v);
-extern void Platform_UpdateModelPosAndRotY(void *self);
-extern int Platform_IsClsnInRange(void *self, int fix, int t);
-extern void Platform_UpdateClsnPosAndRot(void *self);
+#define Platform_UpdateModelPosAndRotY _ZN8Platform21UpdateModelPosAndRotYEv
+#define Platform_IsClsnInRange _ZN8Platform13IsClsnInRangeE5Fix12IiES1_
+#define Platform_UpdateClsnPosAndRot _ZN8Platform19UpdateClsnPosAndRotEv
+extern void _ZN8Platform21UpdateModelPosAndRotYEv(void *self);
+extern int _ZN8Platform13IsClsnInRangeE5Fix12IiES1_(void *self, int fix, int t);
+extern void _ZN8Platform19UpdateClsnPosAndRotEv(void *self);
 
 int func_ov022_021112ac(void *thiz)
 {
