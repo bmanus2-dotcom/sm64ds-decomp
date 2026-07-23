@@ -1,10 +1,16 @@
 extern unsigned short DecIfAbove0_Short(unsigned short *p);
 extern unsigned char DecIfAbove0_Byte(unsigned char *p);
 extern int ApproachAngle(short *p, int target, int a, int b, int c);
+/* Keep the readable source names while binding them to the verified ROM symbols. */
+#define Sound_PlayBank3 _ZN5Sound9PlayBank3EjRK7Vector3
+#define Actor_Spawn _ZN5Actor5SpawnEjjRK7Vector3PK10Vector3_16ii
 extern void _ZN5Sound9PlayBank3EjRK7Vector3(unsigned int id, void *pos);
 extern void *_ZN5Actor5SpawnEjjRK7Vector3PK10Vector3_16ii(unsigned int a, unsigned int b, void *pos, void *v16, int e, int f);
 extern void func_020393a4(void *p, int v);
 extern void func_02039394(void *p, int v);
+#define Platform_UpdateModelPosAndRotY _ZN8Platform21UpdateModelPosAndRotYEv
+#define Platform_IsClsnInRange _ZN8Platform13IsClsnInRangeE5Fix12IiES1_
+#define Platform_UpdateClsnPosAndRot _ZN8Platform19UpdateClsnPosAndRotEv
 extern void _ZN8Platform21UpdateModelPosAndRotYEv(void *self);
 extern int _ZN8Platform13IsClsnInRangeE5Fix12IiES1_(void *self, int fix, int t);
 extern void _ZN8Platform19UpdateClsnPosAndRotEv(void *self);
@@ -24,7 +30,7 @@ int func_ov022_021112ac(void *thiz)
             break;
         *(unsigned short *)(c + 0x300 + 0x22) = 0x96;
         *(unsigned char *)(c + 0x31e) = 1;
-        _ZN5Sound9PlayBank3EjRK7Vector3(0xc, c + 0x74);
+        Sound_PlayBank3(0xc, c + 0x74);
         break;
     case 1:
         if (DecIfAbove0_Short((unsigned short *)(c + 0x322)) == 0) {
@@ -49,7 +55,7 @@ int func_ov022_021112ac(void *thiz)
             v[1] = *(int *)(c + 0x60);
             v[2] = *(int *)(c + 0x64);
             v[1] = *(int *)(c + 0x60) + 0x1f4000;
-            s = _ZN5Actor5SpawnEjjRK7Vector3PK10Vector3_16ii(0xf3, 0, v, 0, *(signed char *)(c + 0xcc), -1);
+            s = Actor_Spawn(0xf3, 0, v, 0, *(signed char *)(c + 0xcc), -1);
             *(void **)((unsigned char *)s + 0x10c) = c;
             *(int *)((unsigned char *)s + 0x118) = *(int *)(c + 0x60);
             {
@@ -66,9 +72,9 @@ int func_ov022_021112ac(void *thiz)
     *(short *)(c + 0x8e) = *(short *)(c + 0x94);
     func_020393a4(c + 0x124, 0x780000);
     func_02039394(c + 0x124, 0x1000);
-    _ZN8Platform21UpdateModelPosAndRotYEv(c);
-    if (_ZN8Platform13IsClsnInRangeE5Fix12IiES1_(c, 0x780000, 0x1000) != 0)
-        _ZN8Platform19UpdateClsnPosAndRotEv(c);
+    Platform_UpdateModelPosAndRotY(c);
+    if (Platform_IsClsnInRange(c, 0x780000, 0x1000) != 0)
+        Platform_UpdateClsnPosAndRot(c);
     *(unsigned char *)(c + 0x320) = 0;
     return 1;
 }
