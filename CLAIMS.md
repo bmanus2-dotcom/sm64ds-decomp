@@ -19,6 +19,8 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
+| ov002 func_ov002_020d708c (0x020d708c, size 0x100) + ov080 func_ov080_02125460 (0x02125460, size 0xfc) | lunavyqo (Grok) | 2026-07-24 | **released** — ov002 improved near-miss **div=14** (was 19) banked; ov080 no_progress div=5 regperm floor; API released |
+| ov007 batch2: func_ov007_020c25fc MATCH; func_ov007_020c55bc tip 9→6 | lunavyqo (Grok) | 2026-07-24 | **partial** — 25fc MATCH+linkcheck VERIFIED (u64-mask f8 RMW); 55bc regperm floor div=6 banked; clm_3c1f1d9bf38e kept, clm_0dada1c3549c released |
 | batch3: ov006 func_ov006_020e2f78 MATCH + ov002 func_ov002_020e7454 tip div=21 | lunavyqo (Grok) | 2026-07-24 | **partial** — e2f78 byte-identical + linkcheck BLIND-1; e7454 near-miss **div=21** (was 35) banked; API clm_7e1102acdb8a kept, clm_31f608cdccfe released |
 | ov007 batch2: func_ov007_020c25fc (0x020c25fc) MATCH; func_ov007_020c55bc tip 9→6 | lunavyqo (Grok) | 2026-07-24 | **partial** — 25fc MATCH+linkcheck VERIFIED (u64-mask f8 RMW); 55bc pure r5/r6 regperm floor div=6 banked; API clm_3c1f1d9bf38e kept, clm_0dada1c3549c released |
 | ov002 func_ov002_020e5948 (0x020e5948, size 0x9e8) | lunavyqo (Grok) | 2026-07-23 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); pure-C: opt_loop_invariants off + texseq inside outer after k=0 |
