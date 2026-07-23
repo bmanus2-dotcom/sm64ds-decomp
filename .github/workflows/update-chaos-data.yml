@@ -27,6 +27,10 @@ concurrency:
 jobs:
   regen:
     runs-on: ubuntu-latest
+    # This job's own refresh commit now touches config/ (the provenance ledger), which
+    # is a watched path, so without this guard it would retrigger itself once per run.
+    # Skipping the bot's own pushes is safe: a refresh commit never contains new matches.
+    if: github.event_name == 'workflow_dispatch' || github.actor != 'github-actions[bot]'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,6 +55,11 @@ jobs:
           git add chaos-db.json
           git commit -m "Refresh Chaos Viewer data from $(git -C .. rev-parse --short HEAD)"
           git push origin chaos-data
+      - name: Stamp provenance for functions that landed in this push
+        # HOW a match was made is only knowable as it lands: a later backfill can
+        # recover the method for ~13% of matches and no more. Declines to guess, so an
+        # unlabelled commit leaves the function unstamped rather than inventing a model.
+        run: python tools/stamp_landed.py
       - name: Refresh README progress bar
         run: python tools/progress.py --write-readme --from-db _chaos_data/chaos-db.json
       - name: Regenerate treemap (README SVG + Pages HTML)
@@ -60,12 +69,12 @@ jobs:
         # from filling with a separate refresh commit per generated file.
         # safe from retrigger loops: no workflow watches README.md, docs/**, or contributions.json
         run: |
-          if git diff --quiet -- README.md docs/index.html docs/progress-treemap.svg contributions.json; then
+          if git diff --quiet -- README.md docs/index.html docs/progress-treemap.svg contributions.json config/match_provenance.jsonl; then
             echo "progress unchanged"; exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md docs/index.html docs/progress-treemap.svg contributions.json
-          git commit -m "Refresh progress (README, treemap, contributions)"
+          git add README.md docs/index.html docs/progress-treemap.svg contributions.json config/match_provenance.jsonl
+          git commit -m "Refresh progress (README, treemap, contributions, provenance)"
           git pull --rebase origin main
           git push origin main
