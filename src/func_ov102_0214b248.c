@@ -1,7 +1,4 @@
 //cpp
-// NONMATCHING: base materialization / addressing (div=23). Logic verified correct vs ROM; not
-// byte-matchable from C at mwccarm 1.2/sp2p3 (see notes/matching-style.md).
-// Counts as decompiled, not matched.
 extern "C" {
 extern unsigned short DecIfAbove0_Short(unsigned short *p);
 extern void func_0203568c(int *p, int v);
@@ -23,7 +20,7 @@ extern "C" int func_ov102_0214b248(char *c)
     {
         unsigned short st = *(unsigned short *)(c + 0x3ea);
         if (st != 0 && st <= 4) {
-            *(int *)(c + 0x128) &= ~0x8000;
+            *(int *)(((int)c + 0x128) & 0xFFFFFFFFFFFFFFFF) &= ~0x8000;
             if (*(unsigned short *)(c + 0x3ea) == 1) {
                 func_ov102_0214ae1c(c);
                 return 0;
@@ -39,9 +36,12 @@ extern "C" int func_ov102_0214b248(char *c)
                 func_02035684((int *)(c + 0x144), v * 0x3c);
                 func_ov002_020ef228(c + 0x144, (int)c);
             }
-            *(int *)(c + 0x128) &= ~4;
-            if (*(unsigned short *)(c + 0x3ea) == 2) {
-                *(int *)(c + 0x128) |= 0x4000;
+            {
+                int *f = (int *)(((long long)(int)(c + 0x128)) & 0xFFFFFFFFFFFFFFFFLL);
+                *f &= ~4;
+                if (*(unsigned short *)(c + 0x3ea) == 2) {
+                    *f |= 0x4000;
+                }
             }
         } else {
             func_ov102_0214b128(c);
