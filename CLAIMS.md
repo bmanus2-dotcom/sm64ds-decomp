@@ -19,6 +19,7 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
+| ov014 func_ov014_0211236c (0x0211236c, size 0x1a0) | lunavyqo (Grok) | 2026-07-24 | **active** — batch1 near-miss refine (102 matching); API clm_9230bad49212 |
 | ov002 _ZN6Player12St_Swim_MainEv (0x020cd94c, size 0x9d8) | lunavyqo (Grok) | 2026-07-24 | **active** — batch8 near-miss refine (prev div=258); API clm_f1040cf22000 |
 | arm9 Stage::InitResources (_ZN5Stage13InitResourcesEv @ 0x0202cc0c, size 0xa84) | lunavyqo (Grok) | 2026-07-24 | **active** — batch4 near-miss refine (API clm_45763b45bf0a) |
 | arm9 Message::Update (_ZN7Message6UpdateEv @ 0x0201c0b8, size 0xa74) | lunavyqo (Grok) | 2026-07-24 | **active** — batch5 near-miss refine (prev div=62); API clm_b38112c264ac |
@@ -28,7 +29,7 @@ it is fair to take over: ping the claimant first.
 | ov002 Minimap::Render (_ZN7Minimap6RenderEv @ 0x20f9e98, size 0x7f8) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); pragma opt_strength_reduction off + u64-launder 0x22e/0x256 + icon hoist; API clm_4e3085f1c681 kept |
 | arm9 func_0203ea5c (0x0203ea5c, size 0xba8) | lunavyqo (Grok) | 2026-07-24 | **active** — batch3 from near-miss div=79; API clm_5f4f0a2139cc |
 | arm9 batch15: func_0201d850 (0x0201d850, size 0x7f4) | lunavyqo (Grok) | 2026-07-24 | **active** — batch15 from near-miss div=70; API clm_1d389df54708 |
-| arm9 func_0203e20c (0x0203e20c, size 0x76c) | lunavyqo (Grok) | 2026-07-24 | **active** — batch11 from near-miss (114 matching); API clm_b732d6dfe398 |
+| arm9 func_0203e20c (0x0203e20c, size 0x76c) | lunavyqo (Grok) | 2026-07-24 | **released** — batch11 improved near-miss 114/86→30 (pf1c, array fakedep, p117c/h10 order, early h4–ha loads); residual epi f1c/f28 vs halfword-batch schedule floor +0x588–0x61c; tip in nearmiss/db.jsonl; API locks released |
 | arm9 func_02009e70 (0x02009e70, size 0x109c) | lunavyqo (Grok) | 2026-07-24 | **active** — batch1 near-miss refine (1613 matching); API clm_e01deb2c5b27 |
 | ov006 batch7: func_ov006_02125f68 (0x02125f68, size 0x9e0) | lunavyqo (Grok) | 2026-07-24 | **active** — batch7 match; API clm_90177cda2e3e |
 | ov002 batch7: func_ov002_020ae4cc (0x020ae4cc, size 0xfc) | lunavyqo (Grok) | 2026-07-24 | **active** — batch7 from near-miss div=9 |
