@@ -19,6 +19,18 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
+| ov060 func_ov060_02115518 (0x02115518, size 0x1d4) | lunavyqo (Grok) | 2026-07-24 | **active** — batch9 from near-miss div=118; CLAIMS.md only (API key expired) |
+| ov060 batch10: func_ov060_02116d78 (0x02116d78, size 0x1fc) | lunavyqo (Grok) | 2026-07-24 | **active** — batch10 from near-miss div=95; CLAIMS.md only (API key expired) |
+| ov060 func_ov060_02112724 (0x02112724, size 0x19c) | lunavyqo (Grok) | 2026-07-24 | **active** — batch3 from near-miss div=90; CLAIMS.md only (API key expired) |
+| ov060 func_ov060_0211747c (0x0211747c, size 0x1a8) | lunavyqo (Grok) | 2026-07-24 | **active** — batch11 from near-miss div=64 (CLAIMS.md only; API key expired) |
+| ov060 func_ov060_02111a28 (0x02111a28, size 0x240) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); cast-short-shift prologue + branch rewrite; claim kept |
+| ov060 func_ov060_02112434 (0x02112434, size 0x1bc) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck BLIND-2 (mwccarm 1.2/sp2p3); u64-mask 0x418/0x41c + inline PMF |
+| ov060 func_ov060_02114858 (0x02114858, size 0x308) | lunavyqo (Grok) | 2026-07-24 | **active** — batch8 from near-miss div=107; CLAIMS.md only (API key expired) |
+| ov060 func_ov060_02117db8 (0x02117db8, size 0x328) | lunavyqo (Grok) | 2026-07-24 | **active** — batch12 from near-miss (div=222 tip size-short); CLAIMS.md only (API key expired) |
+| ov060 func_ov060_02113740 (0x02113740, size 0x354) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); case3 if(!=0){stores} return; CLAIMS.md only |
+| ov060 func_ov060_021140c0 (0x021140c0, size 0x1f4) | lunavyqo (Grok) | 2026-07-24 | **active** — batch7 near-miss refine (div=86); CLAIMS.md only (API key expired) |
+| ov060 func_ov060_021128c0 (0x021128c0, size 0x2e8) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); /100 bounce + u64-launder bases; CLAIMS.md only (API key expired) |
+| ov060 func_ov060_021132a4 (0x021132a4, size 0x160) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); volatile Vector3 + u64-launder RMW + volatile handle load |
 | ov034 _ZN7Wiggler8BehaviorEv (0x02112b5c, size 0x6e0) | lunavyqo (Grok) | 2026-07-24 | **done** — near-miss div=132 banked + PR #680 (// NONMATCHING); API released |
 | ov002 _ZN6Player12St_Swim_MainEv (0x020cd94c, size 0x9d8) | lunavyqo (Grok) | 2026-07-24 | **active** — batch8 near-miss refine (prev div=258); API clm_f1040cf22000 |
 | arm9 Stage::InitResources (_ZN5Stage13InitResourcesEv @ 0x0202cc0c, size 0xa84) | lunavyqo (Grok) | 2026-07-24 | **active** — batch4 near-miss refine (API clm_45763b45bf0a) |
