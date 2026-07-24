@@ -1,7 +1,9 @@
-// NONMATCHING: div=144 (was 277 banked / 211 prior tip). size=0x6e0 frame=0x74 exact.
-// Remaining: loop setup schedule (i/0x1000 before ptrs); Fix12 reg coloring (r0/r3/r8/r2/r5);
-// pv uses static k_off_6f8 (extra ldr) vs pool imm; DecIf add order; loop tail schedule.
-// Proven: swap_roles r7=c, ut1 volatile sp14 load, static off+row form, no setup barrier.
+// NONMATCHING: div=132 (was 144→133→132). size=0x6e0 frame=0x74 exact.
+// MATCHED: u/t block; DecIf order (addr=(s32)c; +=0x702; +=i);
+// pv pool-0x6f8 materialize (u64 launder no_row) byte-identical;
+// head ytmp in r1.
+// REMAINING (~132): setup schedule (8), loop-tail schedule (6),
+// head angbase/tbl/zero coloring (angbase wants r0, tbl r8, zero r2) + part cascade + cam.
 // mwccarm 1.2/sp2p3 --module ov034 @ 0x02112b5c size 0x6e0
 #pragma opt_common_subs off
 #pragma opt_strength_reduction off
@@ -58,8 +60,6 @@ extern u32 data_ov034_02113828[];
 extern s16 data_02082214[];
 extern void *data_0209f318;
 extern s32 data_020a0e68[];
-
-static int k_off_6f8 = 0x6f8;
 
 int _ZN7Wiggler8BehaviorEv(void *arg0)
 {
@@ -132,11 +132,11 @@ int _ZN7Wiggler8BehaviorEv(void *arg0)
     r5 = c;
     r6 = c + 0x160;
     r7 = c + 0x40c;
-    i = 0;
-    fr.sp10 = 0;
-    fr.sp14 = 0;
     one = 1;
     fr.sp18 = 0x1000;
+    fr.sp10 = 0;
+    fr.sp14 = 0;
+    i = 0;
 
     do {
         u = (u16)(4 - *(u8 *)(c + 0x8db));
@@ -153,18 +153,18 @@ int _ZN7Wiggler8BehaviorEv(void *arg0)
 
         if (*(u8 *)(c + 0x8e0) == 0) {
             {
-                int o = 0x702;
-                o = o + i;
-                if (DecIfAbove0_Byte((u8 *)(c + o)) != 0) {
+                int addr = (s32)c;
+                addr += 0x702;
+                addr += i;
+                if (DecIfAbove0_Byte((u8 *)addr) != 0) {
                 {
-                    char *row = c + (i << 1);
-                    s16 *pv = (s16 *)(row + k_off_6f8);
                     s32 zero = 0;
                     s32 round = 0x800;
                     s32 mul = 0x3000;
+                    s16 *pv = (s16 *)(((long long)(int)(c + (i << 1) + 0x6f8)) & 0xFFFFFFFFFFFFFFFFLL);
                     s16 angv = *pv;
                     *pv = (s16)(angv + 0x1200);
-                    angv = *(s16 *)(row + 0x600 + 0xf8);
+                    angv = *(s16 *)(c + (i << 1) + 0x600 + 0xf8);
                     t = data_02082214[((((u16)angv) >> 4) << 1) + 1];
                     t2 = (s32)(((long long)t * mul + round) >> 12);
                     t2 = t2 + (zero & 0);
@@ -204,29 +204,34 @@ int _ZN7Wiggler8BehaviorEv(void *arg0)
     {
         s32 ytmp = *(s32 *)(c + 0x3dc);
         char *angbase = c + 0x400;
-        s16 *tblp = data_02082214;
+        s32 hx = *(s32 *)(c + 0x3cc);
         s32 zero = 0;
-        s32 round = 0x800;
-        s32 scale = 0x64000;
+        s32 hy, hz;
+        s32 round, scale;
         s32 cosv, sinv, fx;
-        s32 hx, hy, hz;
+        s32 pad0, pad1;
 
         *(s32 *)(c + 0x3d0) = ytmp + 0x1000;
-        tbl = tblp;
-        hx = *(s32 *)(c + 0x3cc);
+        pad0 = (s32)r4;
+        pad1 = (s32)r5;
+        hy = ytmp; /* keep ytmp live via hy - wait ytmp was modified */
+        tbl = data_02082214;
         fr.head.x = hx;
-        hy = *(s32 *)(c + 0x3d0);
-        fr.head.y = hy;
+        fr.head.y = *(s32 *)(c + 0x3d0);
+        hy = fr.head.y;
         hz = *(s32 *)(c + 0x3d4);
+        scale = 0x64000;
         fr.head.z = hz;
+        round = 0x800;
+        (void)pad0; (void)pad1; (void)zero;
 
-        cosv = tblp[(*(u16 *)(angbase + 0x46) >> 4) << 1];
+        cosv = tbl[(*(u16 *)(angbase + 0x46) >> 4) << 1];
         fx = (s32)(((long long)cosv * scale + round) >> 12);
         fx = fx + (zero & 0);
         hx = hx + fx;
         fr.head.x = hx;
 
-        sinv = tblp[((*(u16 *)(angbase + 0x46) >> 4) << 1) + 1];
+        sinv = tbl[((*(u16 *)(angbase + 0x46) >> 4) << 1) + 1];
         fx = (s32)(((long long)sinv * scale + round) >> 12);
         fx = fx + (zero & 0);
         hz = hz + fx;
