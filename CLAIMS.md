@@ -19,11 +19,11 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
-| ov060 func_ov060_02117db8 (0x02117db8, size 0x328) | lunavyqo (Grok) | 2026-07-24 | **released** — batch12 near-miss 222→8 banked (nearmiss/db.jsonl); residual call-setup vs work.y/x store order (shape 0.96); CLAIMS.md only |
+| ov060 func_ov060_02117db8 (0x02117db8, size 0x328) | lunavyqo (Grok) | 2026-07-24 | **released** — near-miss improved 222→8 banked in nearmiss/db.jsonl; residual call-setup vs work.y/x store order |
 | ov060 func_ov060_02112724 (0x02112724, size 0x19c) | lunavyqo (Grok) | 2026-07-24 | **released** — batch3 improved tip 90→22 (shared body + V-copy via px, py-first); not matched; banked nearmiss; CLAIMS.md only (API key expired) |
 | ov060 batch10: func_ov060_02116d78 (0x02116d78, size 0x1fc) | lunavyqo (Grok) | 2026-07-24 | **released** — near-miss improved to div=82 (pos[3]+shift*12); regperm floor (r7/early pool vs ip/lr bases); tip in nearmiss/db.jsonl |
 | ov060 func_ov060_021140c0 (0x021140c0, size 0x1f4) | lunavyqo (Grok) | 2026-07-24 | **released** — batch7 near-miss improved 86→17/18 (regperm floor: r3/r5 modulo + ip/0xe8); tip banked in nearmiss/db.jsonl; CLAIMS.md only (API key expired) |
-| ov060 func_ov060_02115518 (0x02115518, size 0x1d4) | lunavyqo (Grok) | 2026-07-24 | **released** — batch9 improved near-miss 118→8 (r0/r2 tbl/z regperm floor); tip banked in nearmiss/db.jsonl; CLAIMS.md only (API key expired) |
+| ov060 func_ov060_02115518 (0x02115518, size 0x1d4) | lunavyqo (Grok) | 2026-07-24 | **released** — batch9 near-miss 118→8→2 (str/smlabb schedule floor); tip banked; CLAIMS.md only |
 | ov002 _ZN6Player12St_Swim_MainEv (0x020cd94c, size 0x9d8) | lunavyqo (Grok) | 2026-07-24 | **active** — batch8 near-miss refine (prev div=258); API clm_f1040cf22000 |
 | arm9 Stage::InitResources (_ZN5Stage13InitResourcesEv @ 0x0202cc0c, size 0xa84) | lunavyqo (Grok) | 2026-07-24 | **active** — batch4 near-miss refine (API clm_45763b45bf0a) |
 | arm9 Message::Update (_ZN7Message6UpdateEv @ 0x0201c0b8, size 0xa74) | lunavyqo (Grok) | 2026-07-24 | **active** — batch5 near-miss refine (prev div=62); API clm_b38112c264ac |
@@ -236,6 +236,9 @@ it is fair to take over: ping the claimant first.
 | ov060 func_ov060_021128c0 (0x021128c0, size 0x2e8) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); /100 bounce + u64-launder bases; CLAIMS.md only (API key expired) |
 | ov060 func_ov060_021132a4 (0x021132a4, size 0x160) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); volatile Vector3 + u64-launder RMW + volatile handle load |
 | ov060 func_ov060_02114858 (0x02114858, size 0x308) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); near-miss→permuter regperm floor; CLAIMS.md only (API key expired) |
+<<<<<<< HEAD
 | ov060 func_ov060_02115518 (0x02115518, size 0x1d4) | lunavyqo (Grok) | 2026-07-24 | **released** — batch9 improved near-miss 118→8 (r0/r2 tbl/z regperm floor); tip banked in nearmiss/db.jsonl; CLAIMS.md only (API key expired) |
+=======
+>>>>>>> 9e52b153 (Improve func_ov060_02115518 near-miss tip to div=2)
 | salvage: 13 console Random batch strays across ov004/ov060/ov063/ov070/ov075/ov084/ov085 (incl. _ZN7BooCage8BehaviorEv, __sinit_ov085_0212f5ec) | Tango | 2026-07-18 | **done** — 13 verified byte-identical + linkcheck VERIFIED; 9 near-misses banked; 169 db ghosts pruned; PR #498 |
 | arm9 100% campaign: ALL remaining arm9 unmatched functions (176 funcs, 107KB — full list reserved; excludes lunavyqo's active div1 trio func_02068dc8/func_0205fb58/func_02068398) | Tango | 2026-07-18 | **active (batch 1 landed)** — 46 matched byte-identical this PR (26 refine + 14 redraft/fresh + 5 salvage + 1 permuter); campaign paused mid-P2/P3 on usage, claim HELD for resume; dedicated worktree campaign to close arm9; matches accumulate locally, single batch PR at the end; near-misses banked on completion |
