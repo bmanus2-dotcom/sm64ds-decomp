@@ -19,6 +19,7 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
+| ov002 _ZN6Player15St_Grabbed_MainEv (0x020db3bc, size 0x11c) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); bedd4 always + u64 0x6e3 + volatile add#0x50/str#0xc; API clm_c92c236f5002 kept |
 | ov102 func_ov102_021498e0 (0x021498e0, size 0x398) | lunavyqo (Grok) | 2026-07-24 | **released** — near-miss improved 221→7 banked in nearmiss/db.jsonl; residual pure instr-sched swap mov#0xd vs add pang (mwccarm floor) |
 | ov060 func_ov060_02117db8 (0x02117db8, size 0x328) | lunavyqo (Grok) | 2026-07-24 | **released** — near-miss improved 222→8 banked in nearmiss/db.jsonl; residual call-setup vs work.y/x store order |
 | ov002 _ZN6Player12St_Swim_MainEv (0x020cd94c, size 0x9d8) | lunavyqo (Grok) | 2026-07-24 | **active** — batch8 near-miss refine (prev div=258); API clm_f1040cf22000 |
