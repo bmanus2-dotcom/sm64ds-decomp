@@ -19,6 +19,12 @@ it is fair to take over: ping the claimant first.
 
 | Range | Who | Claimed | Status |
 |---|---|---|---|
+| ov002 _ZN6Player13St_Climb_MainEv (0x020cb5bc, size 0x778) | lunavyqo (Grok) | 2026-07-24 | **released** — batch12 exhausted div=9 pure r1/r2 regperm floor (stick v + neutral-else; ~100 hand + permuter 500); tip in nearmiss/db.jsonl; API released |
+| ov063 _ZN3Boo8BehaviorEv (0x0211b0a4, size 0x7e4) | lunavyqo (Grok) | 2026-07-24 | **released** — batch14 improved near-miss 184→61 (size-exact); residual player-path bne-vs-pred + regperm (r1/r3 0x500, ip/r3 bases); tip in nearmiss/db.jsonl; API clm_62ffd91b2f90 released |
+| arm9 batch15: func_0201d850 (0x0201d850, size 0x7f4) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); bhs goto-fallthrough + b8=0 before last-block ep/base/f4 |
+| arm9 func_0203e20c (0x0203e20c, size 0x76c) | lunavyqo (Grok) | 2026-07-24 | **released** — batch11 improved near-miss 114/86→33 (pf1c + array fakedep + p117c/h10 order); residual epi f1c/f28/halfword batch schedule floor at +0x588–0x61c; tip in nearmiss/db.jsonl; API clm_b732d6dfe398 released |
+| ov063 batch13: func_ov063_02117cdc (0x02117cdc, size 0x77c) | lunavyqo (Grok) | 2026-07-24 | **active** — continue div=11 (prologue regperm + case9 y/x) |
+| arm9 batch9: func_0204a730 (0x0204a730, size 0x6fc) | lunavyqo (Grok) | 2026-07-24 | **released** — batch9 no_progress div=226 (scale stack-slot floor sp+0x28 vs target sp+0xc; pSpC AT growth keeps size 1788); tip remains in nearmiss/db.jsonl; API clm_f8393cb383a7 released |
 | ov002 _ZN6Player12St_Swim_MainEv (0x020cd94c, size 0x9d8) | lunavyqo (Grok) | 2026-07-24 | **done** — verified byte-identical + linkcheck VERIFIED (mwccarm 1.2/sp2p3); API clm_f1040cf22000 kept |
 | ov002 batch7: func_ov002_020ae4cc (0x020ae4cc, size 0xfc) | lunavyqo (Grok) | 2026-07-24 | **active** — batch7 from near-miss div=9 |
 | ov075 batch7: func_ov075_02116128 (0x02116128, size 0xf4) | lunavyqo (Grok) | 2026-07-24 | **active** — batch7 from near-miss div=29 |
